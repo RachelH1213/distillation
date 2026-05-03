@@ -1,15 +1,5 @@
 {
   "name": "distillation",
   "version": "1.0.0",
-  "description": "人类蒸馏评估系统 - Interactive installation web system",
-  "main": "index.js",
-  "scripts": {
-    "dev": "vercel dev"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
-  },
-  "devDependencies": {
-    "vercel": "^33.0.0"
-  }
+  "description": "人类蒸馏评估系统 - Interactive installation web system"
 }
