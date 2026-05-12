@@ -5,7 +5,7 @@ export async function onRequest(context) {
 
   if (request.method === 'OPTIONS') return cors(null, 204);
 
-  const SUPABASE_URL = env.SUPABASE_URL;
+  const SUPABASE_URL = (env.SUPABASE_URL || '').replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
   const SUPABASE_KEY = env.SUPABASE_ANON_KEY;
   if (!SUPABASE_URL || !SUPABASE_KEY) return json({ error: 'Supabase env vars missing' }, 500);
 
