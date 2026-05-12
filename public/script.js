@@ -461,6 +461,7 @@ async function submitForm() {
     });
     if (!analyzeRes.ok) throw new Error('analyze failed');
     const analysis = await analyzeRes.json();
+    console.log('[AI Analysis]', JSON.stringify(analysis, null, 2));
 
     let id = null, count = 342;
     try {
@@ -616,11 +617,10 @@ function renderCertificate(data) {
   document.getElementById('cert-count').textContent = count || 342;
 }
 
-// ===== TUBE SVG (独立代码片段，方便单独调样式) =====
+// ===== TUBE SVG =====
 function renderTube(dist) {
   const total = 40;
 
-  // Layers: top → bottom (white floats up, black sinks)
   const LAYERS = [
     { key: 'white',  hex: '#E8E5DC', label: '未被定义',  borderSwatch: true },
     { key: 'yellow', hex: '#F5C518', label: '创造与判断' },
@@ -629,7 +629,7 @@ function renderTube(dist) {
     { key: 'black',  hex: '#111111', label: '已被AI掌握' },
   ];
 
-  // Tube body: y=60 to y=278 in viewBox (height=218)
+  // Liquid area: y=60 to y=278 (height=218) in viewBox 0 0 160 310
   const LIQTOP = 60, LIQH = 218;
 
   let curY = LIQTOP;
@@ -643,13 +643,15 @@ function renderTube(dist) {
 
   const uid = 'tb' + Math.random().toString(36).substr(2, 5);
 
-  // SVG rects + divider lines between layers
+  // Liquid rects + dark divider line + white reflection above each boundary
   const liquidSvg = rects.map((r, i) => `
-    <rect x="13" y="${r.y.toFixed(2)}" width="134" height="${r.h.toFixed(2)}" fill="${r.hex}"/>
-    ${i > 0 ? `<line x1="14" y1="${r.y.toFixed(2)}" x2="146" y2="${r.y.toFixed(2)}" stroke="rgba(255,255,255,0.4)" stroke-width="0.6"/>` : ''}
+    <rect x="14" y="${r.y.toFixed(2)}" width="132" height="${r.h.toFixed(2)}" fill="${r.hex}"/>
+    ${i > 0 ? `
+      <line x1="14" y1="${r.y.toFixed(2)}" x2="146" y2="${r.y.toFixed(2)}" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+      <line x1="15" y1="${(r.y - 1).toFixed(2)}" x2="145" y2="${(r.y - 1).toFixed(2)}" stroke="rgba(255,255,255,0.65)" stroke-width="0.8"/>
+    ` : ''}
   `).join('');
 
-  // HTML legend (top → bottom order = same as tube)
   const legendHtml = LAYERS
     .filter(l => (dist[l.key] || 0) > 0)
     .map(l => {
@@ -668,28 +670,30 @@ function renderTube(dist) {
     </div>
     <div class="tube-outer">
       <div class="tube-fig">
-        <svg viewBox="0 0 160 310" width="96" height="186" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 160 310" width="125" height="242" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <clipPath id="${uid}">
-              <!-- Tube interior clip: neck → shoulders → body → round bottom -->
               <path d="M 51,3 L 109,3 L 109,29 L 146,59 L 146,277 A 66,25 0 0,1 14,277 L 14,59 L 51,29 Z"/>
             </clipPath>
           </defs>
 
-          <!-- Liquid layers (clipped to tube interior) -->
+          <!-- Liquid layers clipped to tube interior -->
           <g clip-path="url(#${uid})">
-            <rect x="0" y="0" width="160" height="310" fill="#f8f8f8"/>
+            <rect x="0" y="0" width="160" height="310" fill="#f5f5f2"/>
             ${liquidSvg}
-            <!-- Glass sheen: left edge highlight -->
-            <rect x="14" y="59" width="9" height="218" fill="rgba(255,255,255,0.22)"/>
-            <!-- Liquid surface glint at very top of liquid -->
-            <line x1="15" y1="${LIQTOP}" x2="145" y2="${LIQTOP}" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+            <!-- Left glass highlight strip -->
+            <rect x="14" y="60" width="11" height="217" fill="rgba(255,255,255,0.28)" rx="2"/>
+            <!-- Neck left highlight -->
+            <rect x="52" y="3" width="8" height="26" fill="rgba(255,255,255,0.2)"/>
           </g>
 
-          <!-- Tube outline on top -->
+          <!-- Outer tube outline: 1.5px black -->
           <path d="M 50,2 L 110,2 L 110,30 L 147,60 L 147,278 A 67,26 0 0,1 13,278 L 13,60 L 50,30 Z"
-                fill="none" stroke="#111" stroke-width="1.5"/>
-          <!-- Neck opening rim -->
+                fill="none" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>
+          <!-- Inner glass line: 0.5px light gray (simulates glass thickness) -->
+          <path d="M 52,4 L 108,4 L 108,31 L 145,62 L 145,276 A 65,24 0 0,1 15,276 L 15,62 L 52,31 Z"
+                fill="none" stroke="#ccc" stroke-width="0.5" stroke-linejoin="round"/>
+          <!-- Neck rim -->
           <line x1="50" y1="2" x2="110" y2="2" stroke="#111" stroke-width="1.5"/>
         </svg>
       </div>

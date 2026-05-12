@@ -377,13 +377,13 @@ textarea:focus { border-color: var(--blue); }
 .cert-dots { display: flex; flex-direction: column; gap: 5px; padding-top: 2px; }
 .cdot { width: 10px; height: 10px; border-radius: 50%; display: block; }
 .cert-title-block { flex: 1; }
-.cert-title-zh { font-size: 18px; font-weight: 700; letter-spacing: 0.08em; line-height: 1.2; }
+.cert-title-zh { font-size: 22px; font-weight: 500; letter-spacing: 0.08em; line-height: 1.2; }
 .cert-title-en { font-size: 10px; letter-spacing: 0.15em; opacity: 0.7; margin-top: 4px; }
 
 /* Cert Sections */
-.cert-section { padding: 14px 16px; }
-.section-title { font-size: 10px; letter-spacing: 0.12em; color: #888; margin-bottom: 10px; }
-.cert-divider { border: none; border-top: 1px dashed var(--gray2); margin-top: 14px; }
+.cert-section { padding: 16px 16px; }
+.section-title { font-size: 12px; letter-spacing: 0.2em; color: #888; margin-bottom: 12px; }
+.cert-divider { border: none; border-top: 1px solid #ebebeb; margin-top: 16px; }
 
 /* Info rows */
 .cert-info .info-row, .cert-footer-info .info-row {
@@ -394,11 +394,11 @@ textarea:focus { border-color: var(--blue); }
 .info-value { font-weight: 700; }
 
 /* ===== DISTILLATION TYPE CARD ===== */
-.cert-type-section { padding-bottom: 0; }
+.cert-type-section { padding-bottom: 0; padding-top: 20px; }
 .type-inner {
   background: var(--black);
   color: var(--white);
-  padding: 16px;
+  padding: 20px 16px;
 }
 .type-badge {
   font-size: 9px;
@@ -474,16 +474,16 @@ textarea:focus { border-color: var(--blue); }
 
 /* ===== 下午3点 ===== */
 .afternoon-answer {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   letter-spacing: 0.02em;
 }
 .afternoon-response {
-  font-size: 12px;
+  font-size: 13px;
   font-style: italic;
-  color: #666;
-  line-height: 1.7;
+  color: #555;
+  line-height: 1.8;
 }
 
 /* ===== 认知盲区 red border ===== */
@@ -492,21 +492,26 @@ textarea:focus { border-color: var(--blue); }
   background: #fff4f4 !important;
 }
 
-/* ===== 彩蛋金句 (bigger) ===== */
-.cert-easter-section { padding: 24px 20px; text-align: center; }
+/* ===== 彩蛋金句 ===== */
+.cert-easter-section {
+  background: var(--black);
+  padding: 32px 24px;
+  text-align: center;
+  margin-top: 8px;
+}
 .easter-text {
-  font-size: 15px;
+  font-size: 18px;
   font-style: italic;
-  color: var(--black);
-  line-height: 1.9;
+  color: var(--white);
+  line-height: 2;
 }
 
 /* ===== 结束语 ===== */
 .cert-final-line {
   text-align: center;
-  padding: 2px 16px 18px;
-  font-size: 11px;
-  color: #bbb;
+  padding: 16px 16px 20px;
+  font-size: 12px;
+  color: #999;
   letter-spacing: 0.06em;
   font-style: italic;
 }
@@ -530,10 +535,10 @@ textarea:focus { border-color: var(--blue); }
 /* Eval / Blindspot notes */
 .eval-note {
   border-left: 3px solid var(--yellow);
-  padding: 8px 10px;
-  font-size: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
   background: #fffbe6;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 .blue-border {
   border-left-color: var(--blue) !important;
@@ -543,34 +548,26 @@ textarea:focus { border-color: var(--blue); }
 /* Quote blocks */
 .quote-block {
   padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.8;
 }
 .yellow-border { border-left: 3px solid var(--yellow); }
 
 /* Human moment response */
 .human-response {
-  font-size: 12px;
-  color: #888;
+  font-size: 13px;
+  color: #666;
   font-style: italic;
-  margin-top: 8px;
-  line-height: 1.6;
-  padding: 0 2px;
+  margin-top: 10px;
+  line-height: 1.7;
+  padding: 0 4px;
 }
 
 /* Gray block */
 .gray-block { background: var(--gray); padding: 12px; font-size: 13px; }
 .gray-sub { font-size: 10px; color: #999; font-style: italic; margin-top: 8px; }
 
-/* Easter egg */
-.cert-easter { padding: 10px 16px; }
-.easter-text {
-  font-size: 11px;
-  font-style: italic;
-  color: #888;
-  line-height: 1.6;
-  text-align: center;
-}
+/* (easter-text defined above in cert-easter-section block) */
 
 /* Footer */
 .cert-footer-info { border-top: 1px solid var(--gray2); }
