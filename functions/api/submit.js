@@ -27,38 +27,54 @@ export async function onRequest(context) {
   // POST: insert new submission
   if (request.method === 'POST') {
     const {
-      q1_job, q2_years, q3_location, q4_repetition,
-      q5_tasks, q6_repetitive_thing, q7_quit_thought,
-      q8_ai_usage, q9_ai_replace, q10_ai_feeling,
-      q11_unique, q12_only_yours, q13_afternoon,
-      q14_slacking, q15_redo_career, q16_keep,
+      // Core identity
+      q1_job, q2_years, q3_state,
+      // Spectrum scores (jsonb object)
+      spectrum_scores,
+      // AI relationship
+      q10_ai_usage, q11_ai_replace, q12_ai_feeling,
+      // Unique traits
+      q13_only_yours, q14_afternoon, q15_willing_to_give,
+      // Human moments
+      q16_human_moment, q17_keep,
+      // AI analysis fields
       color_distribution, tags, replaceability_percent, evaluation_note,
       ai_relationship, afternoon_state, cognitive_blindspot, easter_egg,
+      distillation_type, type_en, type_description, type_rarity, human_moment_response,
     } = body;
 
     const insertRes = await sbFetch(SUPABASE_URL, SUPABASE_KEY, 'submissions', 'POST', {
-      // New 16-question fields
-      q1_job, q2_years, q3_location, q4_repetition,
-      q5_tasks:           Array.isArray(q5_tasks) ? q5_tasks : [],
-      q6_repetitive_thing, q7_quit_thought,
-      q8_ai_usage, q9_ai_replace, q10_ai_feeling,
-      q11_unique,
-      q12_only_yours:     Array.isArray(q12_only_yours) ? q12_only_yours : [],
-      q13_afternoon, q14_slacking, q15_redo_career, q16_keep,
+      // New 17-question fields
+      q1_job,
+      q2_years,
+      q3_state,
+      spectrum_scores:     spectrum_scores || null,
+      q10_ai_usage,
+      q11_ai_replace,
+      q12_ai_feeling,
+      q13_only_yours:      Array.isArray(q13_only_yours) ? q13_only_yours : [],
+      q14_afternoon,
+      q15_willing_to_give: Array.isArray(q15_willing_to_give) ? q15_willing_to_give : [],
+      q16_human_moment,
+      q17_keep,
       // AI analysis fields
       color_distribution,
-      tags:               Array.isArray(tags) ? tags : [],
-      replaceability:     replaceability_percent,
+      tags:                Array.isArray(tags) ? tags : [],
+      replaceability:      replaceability_percent,
       evaluation_note,
       ai_relationship,
       afternoon_state,
       cognitive_blindspot: cognitive_blindspot || null,
       easter_egg,
-      // Backward-compat fields
+      distillation_type,
+      type_en,
+      type_description,
+      type_rarity:         type_rarity || null,
+      human_moment_response,
+      // Backward-compat aliases
       job:          q1_job,
-      repetitive:   q6_repetitive_thing,
-      unique_value: q11_unique,
-      want_to_keep: q16_keep,
+      unique_value: q16_human_moment,
+      want_to_keep: q17_keep,
       // Print flags
       printed:       false,
       send_to_print: false,

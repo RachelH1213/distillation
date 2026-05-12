@@ -1,5 +1,5 @@
 """
-蒸馏 DISTILLATION — 打印监听脚本 v2
+蒸馏 DISTILLATION — 打印监听脚本 v3
 运行环境：Mac，连接芯烨 XP-T80A USB 热敏打印机
 用法：python print_listener.py
 """
@@ -73,20 +73,24 @@ def build_color_grid(dist: dict) -> list:
     return lines
 
 def print_certificate(p, record: dict):
-    dist  = record.get("color_distribution") or {}
-    tags  = record.get("tags") or []
-    pct   = record.get("replaceability") or 0
-    note  = record.get("evaluation_note") or ""
-    job   = record.get("q1_job") or record.get("job") or ""
-    q6    = record.get("q6_repetitive_thing") or record.get("repetitive") or ""
-    uniq  = record.get("q11_unique") or record.get("unique_value") or ""
-    keep  = record.get("q16_keep") or record.get("want_to_keep") or ""
-    ai_rel = record.get("ai_relationship") or ""
-    afternoon = record.get("afternoon_state") or ""
-    blindspot = record.get("cognitive_blindspot")
-    easter    = record.get("easter_egg") or ""
-    ts    = record.get("created_at") or ""
-    rid   = str(record.get("id") or "")[-4:].zfill(4)
+    dist             = record.get("color_distribution") or {}
+    tags             = record.get("tags") or []
+    pct              = record.get("replaceability") or 0
+    note             = record.get("evaluation_note") or ""
+    job              = record.get("q1_job") or record.get("job") or ""
+    ai_rel           = record.get("ai_relationship") or ""
+    afternoon        = record.get("afternoon_state") or ""
+    blindspot        = record.get("cognitive_blindspot")
+    easter           = record.get("easter_egg") or ""
+    dist_type        = record.get("distillation_type") or ""
+    type_en          = record.get("type_en") or ""
+    type_desc        = record.get("type_description") or ""
+    type_rarity      = record.get("type_rarity")
+    human_moment     = record.get("q16_human_moment") or ""
+    human_response   = record.get("human_moment_response") or ""
+    keep             = record.get("q17_keep") or record.get("want_to_keep") or ""
+    ts               = record.get("created_at") or ""
+    rid              = str(record.get("id") or "")[-4:].zfill(4)
 
     try:
         dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
@@ -110,6 +114,22 @@ def print_certificate(p, record: dict):
     p.text(f"时间  {ts_str}\n")
     p.text(f"职业  {job}\n")
     p.text(divider("-") + "\n")
+
+    # ---- Distillation Type ----
+    if dist_type:
+        p.set(align="center")
+        p.text("[ 蒸馏类型 DISTILLATION TYPE ]\n")
+        p.set(bold=True, double_height=True)
+        p.text(f"{dist_type}\n")
+        p.set(bold=False, double_height=False)
+        if type_en:
+            p.text(f"{type_en}\n")
+        if type_desc:
+            p.text(f"{type_desc}\n")
+        if type_rarity is not None:
+            p.text(f"类似您的人占今日 {type_rarity}%\n")
+        p.set(align="left")
+        p.text(divider("-") + "\n")
 
     # ---- Color Grid ----
     p.set(align="center")
@@ -142,41 +162,45 @@ def print_certificate(p, record: dict):
         p.text(f"  {line}\n")
     p.text(divider("-") + "\n")
 
-    # ---- AI Relationship (new) ----
+    # ---- AI Relationship ----
     if ai_rel:
         p.text("[ 您与 AI 的关系 ]\n")
         for line in wrap(ai_rel):
             p.text(f"  {line}\n")
         p.text(divider("-") + "\n")
 
-    # ---- Afternoon State (new) ----
+    # ---- Afternoon State ----
     if afternoon:
         p.text("[ 下午3点的您 ]\n")
         for line in wrap(afternoon):
             p.text(f"  {line}\n")
         p.text(divider("-") + "\n")
 
-    # ---- Cognitive Blindspot (new, conditional) ----
+    # ---- Cognitive Blindspot (conditional) ----
     if blindspot:
         p.text("[ 认知盲区提示 ]\n")
         for line in wrap(blindspot):
             p.text(f"  {line}\n")
         p.text(divider("-") + "\n")
 
-    # ---- Q11 ----
-    p.text("[ 最难被替代的部分 ]\n")
-    for line in wrap(uniq):
+    # ---- Human Moment (Q16 + AI response) ----
+    p.text("[ 您本周最像人的瞬间 ]\n")
+    for line in wrap(human_moment):
         p.text(f"  {line}\n")
+    if human_response:
+        p.text("\n")
+        for line in wrap(human_response):
+            p.text(f"  {line}\n")
     p.text(divider("-") + "\n")
 
-    # ---- Q16 ----
+    # ---- Q17: AI Cannot Extract ----
     p.text("[ AI 暂时无法提取的部分 ]\n")
     for line in wrap(keep):
         p.text(f"  {line}\n")
     p.text("  (此项将于下次迭代处理)\n")
     p.text(divider("-") + "\n")
 
-    # ---- Easter Egg (new) ----
+    # ---- Easter Egg ----
     if easter:
         p.set(align="center")
         for line in wrap(easter):

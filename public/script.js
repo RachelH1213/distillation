@@ -2,6 +2,7 @@
 
 // ===== QUESTIONS DEFINITION =====
 const QUESTIONS = [
+  // STEP 1: 你是谁
   {
     id: 'q1', step: 1, num: 1, type: 'single', required: true,
     label: '你是做什么的？',
@@ -13,109 +14,114 @@ const QUESTIONS = [
     id: 'q2', step: 1, num: 2, type: 'single', required: true,
     label: '你工作几年了？',
     cols: 1,
-    options: ['还在读书/实习','1年以内','1-3年','3-7年','7-15年','15年以上，是行业老人了','想不起来了，太久了'],
+    options: ['还在读书/实习','1年以内','1-3年','3-7年','7-15年','15年以上'],
     hasOther: false,
   },
   {
     id: 'q3', step: 1, num: 3, type: 'single', required: true,
-    label: '你的工作主要在哪里完成？',
-    cols: 1,
-    options: ['工位上，不挪窝','会议室里漂泊','哪有WiFi哪能干','客户那边、外勤','工厂/车间/户外','床上、沙发上','其他'],
-    hasOther: true,
-  },
-  {
-    id: 'q4', step: 2, num: 4, type: 'single', required: true,
-    label: '你每天工作大概多长时间在重复同样的事？',
-    cols: 1,
-    options: ['几乎全部，重复占80%以上','大半天，50%-80%','一半一半','不多，大部分在解决新问题','几乎没有，每天都不一样'],
-    hasOther: false,
-  },
-  {
-    id: 'q5', step: 2, num: 5, type: 'multi', required: true, max: 3,
-    label: '选出你工作中最常做的事（最多3个）',
+    label: '你最近的状态是？',
     cols: 2,
-    options: ['写文档/做表格','开会/协调','创作/设计','写代码/调试','处理客户/服务他人','数据分析','教学/讲解','决策/审核','体力劳动/操作设备','学习/研究','销售/谈判','监督/管理他人','其他'],
-    hasOther: true,
-  },
-  {
-    id: 'q6', step: 2, num: 6, type: 'text', required: true, maxlen: 20,
-    label: '你工作里最重复的一件事是什么？',
-    placeholder: '例：每天写日报、整理表格...',
-  },
-  {
-    id: 'q7', step: 2, num: 7, type: 'single', required: true,
-    label: '你最近一次说「这破班不上了」是什么时候？',
-    cols: 1,
-    options: ['今天','这周内','这个月','想过但没说出口','我从不抱怨，我只是默默看招聘网站','我热爱我的工作（真的）'],
+    options: ['在卷，没法停','在熬，撑着','在飘，找不到锚','在躺，主动选择','在等，等一个变化','不确定'],
     hasOther: false,
   },
+
+  // STEP 2: 工作频谱
   {
-    id: 'q8', step: 3, num: 8, type: 'single', required: true,
-    label: '你已经在用 AI 工具了吗？',
-    cols: 1,
-    options: ['离不开了，每天都用','经常用，主要用来提效','偶尔用，玩票性质','试过几次，觉得不好用','完全没用过，懒得学','拒绝使用，我有我的坚持'],
-    hasOther: false,
+    id: 'q4', step: 2, num: 4, type: 'spectrum', required: true,
+    label: '你的工作更接近哪种？',
+    left: '执行机器', right: '不安分子',
   },
   {
-    id: 'q9', step: 3, num: 9, type: 'single', required: true,
-    label: '你觉得 AI 现在能替代你工作的多少？',
-    cols: 1,
-    options: ['几乎全部，我已经感觉到威胁','大部分技术活能替代，但核心还需要我','一半一半','只能替代很少一部分','几乎不能，我做的事 AI 还远着呢'],
-    hasOther: false,
+    id: 'q5', step: 2, num: 5, type: 'spectrum', required: true,
+    label: '你做决定的时候，更依赖？',
+    left: '数据和逻辑', right: '直觉和感觉',
   },
+  {
+    id: 'q6', step: 2, num: 6, type: 'spectrum', required: true,
+    label: '你和人接触的时候，更像？',
+    left: '观察者', right: '共情者',
+  },
+  {
+    id: 'q7', step: 2, num: 7, type: 'spectrum', required: true,
+    label: '面对重复的任务，你的反应？',
+    left: '能稳定输出', right: '会想出新玩法',
+  },
+  {
+    id: 'q8', step: 2, num: 8, type: 'spectrum', required: true,
+    label: '你的工作产出更像？',
+    left: '解决问题', right: '创造体验',
+  },
+  {
+    id: 'q9', step: 2, num: 9, type: 'spectrum', required: true,
+    label: '你对失控感的耐受度？',
+    left: '地图依赖', right: '在风暴里跳舞',
+  },
+
+  // STEP 3: 与AI的关系
   {
     id: 'q10', step: 3, num: 10, type: 'single', required: true,
-    label: '面对 AI 的发展，你的真实感受是？',
+    label: '你已经在用 AI 工具了吗？',
+    cols: 1,
+    options: ['每天都用，离不开了','经常用来提效','偶尔用','试过不喜欢','完全没用过'],
+    hasOther: false,
+  },
+  {
+    id: 'q11', step: 3, num: 11, type: 'single', required: true,
+    label: '你觉得 AI 能替代你工作的多少？',
+    cols: 1,
+    options: ['几乎全部','大部分','一半','少部分','几乎没有'],
+    hasOther: false,
+  },
+  {
+    id: 'q12', step: 3, num: 12, type: 'single', required: true,
+    label: '面对 AI 的发展，你的真实感受？',
     cols: 2,
-    options: ['兴奋，新时代来了','焦虑，怕被淘汰','麻木，反正也改变不了什么','好奇，想看看会怎样','抗拒，不想接受这一切','其实我也是 AI（doge）','其他'],
-    hasOther: true,
+    options: ['兴奋','焦虑','麻木','好奇','抗拒','其实我也是 AI（doge）'],
+    hasOther: false,
   },
+
+  // STEP 4: 独特之处
   {
-    id: 'q11', step: 4, num: 11, type: 'text', required: true, maxlen: 20,
-    label: '你觉得自己最难被替代的地方是什么？',
-    placeholder: '例：理解客户没说出口的需求...',
-  },
-  {
-    id: 'q12', step: 4, num: 12, type: 'multi', required: true, max: 3,
-    label: '哪些是 AI 做不到、只属于你的？（最多3个）',
+    id: 'q13', step: 4, num: 13, type: 'multi', required: true, max: 3,
+    label: '哪些是只属于你的？（最多3个）',
     cols: 2,
     options: ['同理心/共情','直觉/第六感','审美/品味','幽默感','责任感/担当','经验沉淀','跨领域联想','道德判断','情绪劳动/安抚他人','临场应变','创造从无到有','和动物/小孩相处','体感记忆/手艺','信任与人际关系','嘴硬心软','其他'],
     hasOther: true,
   },
   {
-    id: 'q13', step: 5, num: 13, type: 'single', required: true,
-    label: '选一种最能描述你工作日下午3点状态的',
+    id: 'q14', step: 4, num: 14, type: 'single', required: true,
+    label: '选一种最能描述你工作日下午3点的状态',
     cols: 2,
-    options: ['心流中，一切顺利','在开会，想散场','在划水，假装很忙','在崩溃，想辞职','在咖啡因里游泳','在想晚饭吃什么','在思考人生','不存在，我已经下班了','在和领导周旋','在 emo'],
+    options: ['心流中，一切顺利','在开会，想散场','在划水，假装很忙','在崩溃，想辞职','在咖啡因里游泳','在想晚饭吃什么','在思考人生','不存在，我已经下班了','在 emo'],
     hasOther: false,
   },
   {
-    id: 'q14', step: 5, num: 14, type: 'single', required: true,
-    label: '你最常用来「摸鱼」的方式是？',
+    id: 'q15', step: 4, num: 15, type: 'multi', required: true, max: 2,
+    label: '如果 AI 只能提取你一部分，你愿意让它带走哪些？（最多2个）',
     cols: 1,
-    options: ['刷小红书/抖音','看新闻/八卦','刷购物车','跟同事吐槽','假装在思考','上厕所久一点','在工位睡觉','我是卷王，不摸鱼','其他'],
-    hasOther: true,
+    options: ['我的工作技能','我的说话方式','我的审美','我的回忆','我的判断力','什么都行只要给钱','一样都不愿意'],
+    hasOther: false,
+  },
+
+  // STEP 5: 人性时刻
+  {
+    id: 'q16', step: 5, num: 16, type: 'text', required: true, maxlen: 30,
+    label: '你本周最像人的瞬间是什么？',
+    placeholder: '例：在地铁上让座给一个奶奶...',
   },
   {
-    id: 'q15', step: 5, num: 15, type: 'single', required: true,
-    label: '如果让你重新选一次职业，你会？',
-    cols: 1,
-    options: ['还选现在这个，是真爱','还选这个，但换个公司','换个完全不同的行业','不工作了，我想躺平','当艺术家/作家/自由创作者','回去重新读书','不知道，问问 AI 给点建议','其他'],
-    hasOther: true,
-  },
-  {
-    id: 'q16', step: 5, num: 16, type: 'text', required: true, maxlen: 15,
+    id: 'q17', step: 5, num: 17, type: 'text', required: true, maxlen: 15,
     label: '如果明天被 AI 取代，你最想带走什么？',
     placeholder: '例：和同事一起吃饭的时光...',
   },
 ];
 
 const STEPS = [
-  { num: 1, title: '基础信息' },
-  { num: 2, title: '工作真相' },
+  { num: 1, title: '你是谁' },
+  { num: 2, title: '工作频谱' },
   { num: 3, title: '与AI的关系' },
-  { num: 4, title: '独特价值' },
-  { num: 5, title: '人性的部分' },
+  { num: 4, title: '独特之处' },
+  { num: 5, title: '人性时刻' },
 ];
 
 // ===== STATE =====
@@ -136,6 +142,13 @@ function startForm() {
   renderStep(1);
 }
 
+function resetToIntro() {
+  currentStep = 1;
+  Object.keys(answers).forEach(k => delete answers[k]);
+  currentSubmissionId = null;
+  goToPage('page-intro');
+}
+
 // ===== FORM RENDERING =====
 function renderStep(step) {
   const container = document.getElementById('questions-container');
@@ -143,7 +156,6 @@ function renderStep(step) {
 
   container.innerHTML = stepQs.map(q => renderQuestion(q)).join('');
 
-  // Attach event listeners
   stepQs.forEach(q => {
     if (q.type === 'single' || q.type === 'multi') {
       document.querySelectorAll(`.card-opt[data-qid="${q.id}"]`).forEach(card => {
@@ -168,22 +180,23 @@ function renderStep(step) {
           updateNextButton();
         });
       }
+    } else if (q.type === 'spectrum') {
+      document.querySelectorAll(`.spectrum-dot[data-qid="${q.id}"]`).forEach(dot => {
+        dot.addEventListener('click', () => handleSpectrumClick(dot, q));
+      });
     }
   });
 
-  // Restore saved answers
   stepQs.forEach(q => restoreAnswer(q));
 
-  // Update progress UI
   document.getElementById('step-num').textContent = step;
   document.getElementById('step-title-label').textContent = STEPS[step - 1].title;
-  document.getElementById('progress-fill').style.width = `${(step / 5) * 100}%`;
+  document.getElementById('progress-fill').style.width = `${(step / STEPS.length) * 100}%`;
 
-  // Update nav buttons
   const prevBtn = document.getElementById('btn-prev');
   const nextBtn = document.getElementById('btn-next');
   prevBtn.style.display = step === 1 ? 'none' : 'block';
-  nextBtn.textContent = step === 5 ? '开始蒸馏' : '下一步';
+  nextBtn.textContent = step === STEPS.length ? '开始蒸馏' : '下一步';
 
   updateNextButton();
 }
@@ -214,6 +227,8 @@ function renderQuestion(q) {
       </div>
       ${otherHtml}
     `;
+  } else if (q.type === 'spectrum') {
+    body = renderSpectrumBody(q);
   } else if (q.type === 'text') {
     body = `
       <div class="textarea-wrap">
@@ -232,6 +247,17 @@ function renderQuestion(q) {
       ${body}
     </div>
   `;
+}
+
+function renderSpectrumBody(q) {
+  const dots = [1,2,3,4,5].map(v =>
+    `<div class="spectrum-dot" data-qid="${q.id}" data-value="${v}"></div>`
+  ).join('');
+  return `<div class="spectrum-wrap">
+    <span class="spectrum-label spectrum-l">${q.left}</span>
+    <div class="spectrum-track">${dots}</div>
+    <span class="spectrum-label spectrum-r">${q.right}</span>
+  </div>`;
 }
 
 function restoreAnswer(q) {
@@ -258,6 +284,9 @@ function restoreAnswer(q) {
       const counter = document.getElementById(`${q.id}-count`);
       if (counter) counter.textContent = `${val.length}/${q.maxlen}`;
     }
+  } else if (q.type === 'spectrum' && val) {
+    const dot = document.querySelector(`.spectrum-dot[data-qid="${q.id}"][data-value="${val}"]`);
+    if (dot) dot.classList.add('selected');
   }
 }
 
@@ -314,6 +343,16 @@ function handleCardClick(card, q) {
   updateNextButton();
 }
 
+// ===== SPECTRUM CLICK HANDLER =====
+function handleSpectrumClick(dot, q) {
+  const value = parseInt(dot.dataset.value, 10);
+  answers[q.id] = value;
+  document.querySelectorAll(`.spectrum-dot[data-qid="${q.id}"]`).forEach(d => {
+    d.classList.toggle('selected', parseInt(d.dataset.value, 10) === value);
+  });
+  updateNextButton();
+}
+
 function updateMultiState(q, arr) {
   const countEl = document.getElementById(`${q.id}-count`);
   if (countEl) {
@@ -335,6 +374,8 @@ function validateStep(step) {
       if (!answers[q.id] || answers[q.id].length === 0) return false;
     } else if (q.type === 'text') {
       if (!answers[q.id] || !answers[q.id].trim()) return false;
+    } else if (q.type === 'spectrum') {
+      if (!answers[q.id]) return false;
     }
   }
   return true;
@@ -348,7 +389,7 @@ function updateNextButton() {
 
 function nextStep() {
   if (!validateStep(currentStep)) return;
-  if (currentStep === 5) { submitForm(); return; }
+  if (currentStep === STEPS.length) { submitForm(); return; }
   currentStep++;
   renderStep(currentStep);
   window.scrollTo(0, 0);
@@ -385,22 +426,25 @@ function getMultiVal(qid) {
 
 function collectFormData() {
   return {
-    q1_job:             getVal('q1'),
-    q2_years:           getVal('q2'),
-    q3_location:        getVal('q3'),
-    q4_repetition:      getVal('q4'),
-    q5_tasks:           getMultiVal('q5'),
-    q6_repetitive_thing: getVal('q6'),
-    q7_quit_thought:    getVal('q7'),
-    q8_ai_usage:        getVal('q8'),
-    q9_ai_replace:      getVal('q9'),
-    q10_ai_feeling:     getVal('q10'),
-    q11_unique:         getVal('q11'),
-    q12_only_yours:     getMultiVal('q12'),
-    q13_afternoon:      getVal('q13'),
-    q14_slacking:       getVal('q14'),
-    q15_redo_career:    getVal('q15'),
-    q16_keep:           getVal('q16'),
+    q1_job:              getVal('q1'),
+    q2_years:            getVal('q2'),
+    q3_state:            getVal('q3'),
+    spectrum_scores: {
+      q4: answers.q4 || 3,
+      q5: answers.q5 || 3,
+      q6: answers.q6 || 3,
+      q7: answers.q7 || 3,
+      q8: answers.q8 || 3,
+      q9: answers.q9 || 3,
+    },
+    q10_ai_usage:        getVal('q10'),
+    q11_ai_replace:      getVal('q11'),
+    q12_ai_feeling:      getVal('q12'),
+    q13_only_yours:      getMultiVal('q13'),
+    q14_afternoon:       getVal('q14'),
+    q15_willing_to_give: getMultiVal('q15'),
+    q16_human_moment:    answers['q16'] || '',
+    q17_keep:            answers['q17'] || '',
   };
 }
 
@@ -437,38 +481,38 @@ async function submitForm() {
 
   } catch (err) {
     console.error('submitForm error:', err);
-    const analysis = fallbackAnalysis(collectFormData());
-    renderCertificate({ ...collectFormData(), ...analysis, id: null, count: 342 });
+    const analysis = fallbackAnalysis(formData);
+    renderCertificate({ ...formData, ...analysis, id: null, count: 342 });
     goToPage('page-cert');
   }
 }
 
-// ===== FALLBACK RULE-BASED ANALYSIS =====
+// ===== FALLBACK ANALYSIS =====
 function fallbackAnalysis(data) {
-  const { q4_repetition = '', q5_tasks = [], q12_only_yours = [] } = data;
+  const { spectrum_scores = {}, q13_only_yours = [] } = data;
+  const s = spectrum_scores;
 
-  let black = 10;
-  if (q4_repetition.includes('80%')) black = 18;
-  else if (q4_repetition.includes('50%')) black = 14;
-  else if (q4_repetition.includes('一半')) black = 11;
-  else if (q4_repetition.includes('大部分')) black = 8;
-  else if (q4_repetition.includes('几乎没有')) black = 5;
+  // q4: 1=执行机器 5=不安分子 → low=more black
+  const q4 = s.q4 || 3;
+  const q5 = s.q5 || 3;
+  const q6 = s.q6 || 3;
+  const q8 = s.q8 || 3;
 
-  const mechanicalBonus = q5_tasks.filter(t => ['写文档/做表格','数据分析'].includes(t)).length * 2;
-  black = Math.min(20, black + mechanicalBonus);
+  let black = 10 + Math.round((3 - q4) * 2.5);
+  black = Math.max(5, Math.min(20, black));
 
   const creativeItems = ['创造从无到有','审美/品味','跨领域联想'];
-  let yellow = 6 + q12_only_yours.filter(v => creativeItems.includes(v)).length * 2;
-  if (q5_tasks.includes('创作/设计')) yellow = Math.min(14, yellow + 2);
-  yellow = Math.min(14, yellow);
+  let yellow = 5 + Math.round((q8 - 3) * 1.5);
+  yellow += q13_only_yours.filter(v => creativeItems.includes(v)).length * 2;
+  yellow = Math.max(4, Math.min(14, yellow));
 
   const empathyItems = ['同理心/共情','情绪劳动/安抚他人','信任与人际关系'];
-  let red = 5 + q12_only_yours.filter(v => empathyItems.includes(v)).length * 2;
-  if (q5_tasks.some(t => ['处理客户/服务他人','教学/讲解'].includes(t))) red = Math.min(12, red + 2);
-  red = Math.min(12, red);
+  let red = 4 + Math.round((q6 - 3) * 1.5);
+  red += q13_only_yours.filter(v => empathyItems.includes(v)).length * 2;
+  red = Math.max(3, Math.min(12, red));
 
-  let blue = 4;
-  if (q5_tasks.some(t => ['开会/协调','监督/管理他人','销售/谈判'].includes(t))) blue = 7;
+  let blue = 4 + Math.round((3 - q5) * 1);
+  blue = Math.max(3, Math.min(8, blue));
 
   const white = Math.max(3, 40 - black - yellow - red - blue);
 
@@ -478,9 +522,14 @@ function fallbackAnalysis(data) {
     replaceability_percent: Math.min(92, Math.max(15, Math.round(black / 40 * 200))),
     evaluation_note: '您的部分功能已可由现有模型替代，但仍有若干成分尚待提取。请配合完成后续评估。',
     ai_relationship: '保持观望，尚未深度绑定',
-    afternoon_state: '状态未知，可能在认真思考',
+    afternoon_state: '状态未知，可能在认真工作',
     cognitive_blindspot: null,
     easter_egg: '感谢您参与本次人类蒸馏评估。您的成分已被记录在案。',
+    distillation_type: '未被定义型',
+    type_en: 'UNDEFINED TYPE',
+    type_description: '—',
+    type_rarity: 31,
+    human_moment_response: '这一刻已被系统记录。',
   };
 }
 
@@ -488,21 +537,30 @@ function fallbackAnalysis(data) {
 function renderCertificate(data) {
   const {
     id, count,
-    q1_job, q11_unique, q16_keep,
+    q1_job, q16_human_moment, q17_keep,
     color_distribution, tags, replaceability_percent, evaluation_note,
     ai_relationship, afternoon_state, cognitive_blindspot, easter_egg,
+    distillation_type, type_en, type_description, type_rarity, human_moment_response,
   } = data;
 
   currentSubmissionId = id;
 
-  // ID & timestamp
-  const certNum = id ? String(id).slice(-4).padStart(4, '0') : String(Math.floor(Math.random() * 9000 + 1000));
+  const certNum = id
+    ? String(id).slice(-4).padStart(4, '0')
+    : String(Math.floor(Math.random() * 9000 + 1000));
   const now = new Date();
   const ts = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
   document.getElementById('cert-id').textContent   = `#${certNum}`;
   document.getElementById('cert-time').textContent = ts;
   document.getElementById('cert-job').textContent  = q1_job || '----';
+
+  // Distillation type card
+  document.getElementById('cert-type-name').textContent   = distillation_type || '---';
+  document.getElementById('cert-type-en').textContent     = type_en || '---';
+  document.getElementById('cert-type-desc').textContent   = type_description || '---';
+  document.getElementById('cert-type-rarity').textContent =
+    `类似您的人占今日 ${type_rarity != null ? type_rarity : '--'}%`;
 
   // Color grid
   renderColorGrid(color_distribution || { red:8, yellow:10, blue:5, black:14, white:3 });
@@ -521,10 +579,11 @@ function renderCertificate(data) {
     : `低于今日平均水平（${avg}%）▼ ${avg - pct}%`;
   document.getElementById('cert-eval-note').textContent = evaluation_note || '';
 
-  // New fields
-  document.getElementById('cert-ai-rel').textContent   = ai_relationship || '';
+  // AI relationship & afternoon state
+  document.getElementById('cert-ai-rel').textContent    = ai_relationship || '';
   document.getElementById('cert-afternoon').textContent = afternoon_state || '';
 
+  // Cognitive blindspot (conditional)
   const blindspotSec = document.getElementById('sec-blindspot');
   if (cognitive_blindspot) {
     blindspotSec.style.display = 'block';
@@ -533,9 +592,17 @@ function renderCertificate(data) {
     blindspotSec.style.display = 'none';
   }
 
-  document.getElementById('cert-q11').textContent  = q11_unique || '';
-  document.getElementById('cert-q16').textContent  = q16_keep || '';
+  // Human moment (Q16 + AI response)
+  document.getElementById('cert-human-moment').textContent  = q16_human_moment || '';
+  document.getElementById('cert-human-response').textContent = human_moment_response || '';
+
+  // Q17 keep
+  document.getElementById('cert-q17').textContent = q17_keep || '';
+
+  // Easter egg
   document.getElementById('cert-easter').textContent = easter_egg || '';
+
+  // Count
   document.getElementById('cert-count').textContent = count || 342;
 }
 
@@ -595,24 +662,24 @@ async function saveCertImage() {
 }
 
 // ===== PRINT FLOW =====
-function sendToPrint() { document.getElementById('print-modal').style.display = 'flex'; }
-function closePrintModal() { document.getElementById('print-modal').style.display = 'none'; }
+function sendToPrint() {
+  document.getElementById('print-modal').style.display = 'flex';
+}
+
+function closePrintModal() {
+  document.getElementById('print-modal').style.display = 'none';
+}
 
 async function confirmPrint() {
   closePrintModal();
-  if (!currentSubmissionId) {
-    alert('无法连接到服务器，请联系工作人员手动打印。');
-    return;
+  if (currentSubmissionId) {
+    try {
+      await fetch('/api/submit', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentSubmissionId }),
+      });
+    } catch (_) {}
   }
-  try {
-    const res = await fetch('/api/submit', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: currentSubmissionId, send_to_print: true }),
-    });
-    if (!res.ok) throw new Error();
-    alert('✓ 已加入打印队列！稍后请到打印机处取走您的证书。');
-  } catch {
-    alert('网络错误，请联系工作人员。');
-  }
+  goToPage('page-complete');
 }

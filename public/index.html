@@ -25,22 +25,22 @@
       <h1 class="title-en">DISTILLATION</h1>
       <div class="divider"></div>
       <p class="subtitle">人类蒸馏评估系统 v1.0</p>
-      <p class="intro-desc">请配合完成评估。<br>本次评估将提取您作为人类的有效成分。</p>
+      <p class="intro-desc">请配合完成评估。<br>本次评估将提取您作为人类的有效成分，<br>剩余部分将转交至展厅装置处理。</p>
     </div>
     <div class="intro-footer">
       <button class="btn-primary" onclick="startForm()">开始评估</button>
-      <p class="fine-print">共16题 · 预计耗时3分钟 · 数据匿名用于展览</p>
+      <p class="fine-print">共17题 · 预计耗时3分钟 · 数据匿名用于展览</p>
     </div>
   </div>
 </div>
 
-<!-- PAGE 2: FORM (multi-step, JS rendered) -->
+<!-- PAGE 2: FORM (multi-step) -->
 <div id="page-form" class="page">
   <div class="form-wrapper">
     <div class="progress-header">
       <div class="progress-top">
         <span class="progress-label">第 <span id="step-num">1</span> 步 / 共 5 步</span>
-        <span class="progress-step-title" id="step-title-label">基础信息</span>
+        <span class="progress-step-title" id="step-title-label">你是谁</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill" id="progress-fill" style="width:20%"></div>
@@ -107,6 +107,18 @@
         <div class="cert-divider"></div>
       </div>
 
+      <!-- DISTILLATION TYPE CARD (new) -->
+      <div class="cert-section cert-type-section">
+        <div class="type-inner">
+          <div class="type-badge">蒸馏类型 DISTILLATION TYPE</div>
+          <div class="type-name" id="cert-type-name">---</div>
+          <div class="type-en" id="cert-type-en">---</div>
+          <div class="type-desc" id="cert-type-desc">---</div>
+          <div class="type-rarity" id="cert-type-rarity">类似您的人占今日 ---%</div>
+        </div>
+        <div class="cert-divider"></div>
+      </div>
+
       <!-- COLOR GRID -->
       <div class="cert-section">
         <div class="section-title">[ 有效成分分布图 ]</div>
@@ -137,45 +149,46 @@
         <div class="cert-divider"></div>
       </div>
 
-      <!-- AI RELATIONSHIP (new) -->
+      <!-- AI RELATIONSHIP -->
       <div class="cert-section">
         <div class="section-title">[ 您与 AI 的关系 ]</div>
         <div class="quote-block yellow-border" id="cert-ai-rel"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- AFTERNOON STATE (new) -->
+      <!-- AFTERNOON STATE -->
       <div class="cert-section">
         <div class="section-title">[ 下午3点的您 ]</div>
         <div class="quote-block yellow-border" id="cert-afternoon"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- COGNITIVE BLINDSPOT (new, conditional) -->
+      <!-- COGNITIVE BLINDSPOT (conditional) -->
       <div class="cert-section" id="sec-blindspot" style="display:none">
         <div class="section-title">[ 认知盲区提示 ]</div>
         <div class="eval-note blue-border" id="cert-blindspot"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- Q11: HARDEST TO REPLACE -->
+      <!-- HUMAN MOMENT (new, Q16) -->
       <div class="cert-section">
-        <div class="section-title">[ 最难被替代的部分 ]</div>
-        <div class="quote-block yellow-border" id="cert-q11"></div>
+        <div class="section-title">[ 您本周最像人的瞬间 ]</div>
+        <div class="quote-block yellow-border" id="cert-human-moment"></div>
+        <div class="human-response" id="cert-human-response"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- Q16: AI CANNOT EXTRACT -->
+      <!-- Q17: AI CANNOT EXTRACT -->
       <div class="cert-section">
         <div class="section-title">[ AI 暂时无法提取的部分 ]</div>
         <div class="gray-block">
-          <div id="cert-q16"></div>
+          <div id="cert-q17"></div>
           <div class="gray-sub">（此项将于下次迭代处理）</div>
         </div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- EASTER EGG (new) -->
+      <!-- EASTER EGG -->
       <div class="cert-section cert-easter">
         <div class="easter-text" id="cert-easter"></div>
       </div>
@@ -201,20 +214,62 @@
     </div><!-- /#certificate -->
 
     <div class="cert-actions" id="cert-actions">
-      <button class="btn-secondary" onclick="saveCertImage()">保存证书图片</button>
-      <button class="btn-primary" onclick="sendToPrint()">投入装置（参与共创）</button>
+      <div class="cert-actions-label">请选择您的证书去向</div>
+      <button class="btn-cert-keep" onclick="saveCertImage()">带走 / 保留人形</button>
+      <button class="btn-cert-feed" onclick="sendToPrint()">投喂装置 / 完成蒸馏</button>
     </div>
   </div>
 </div>
 
-<!-- PRINT CONFIRM MODAL -->
+<!-- PAGE 5: COMPLETE -->
+<div id="page-complete" class="page">
+  <div class="complete-wrapper">
+    <div class="complete-top">
+      <div class="color-dots">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot blue"></span>
+      </div>
+    </div>
+    <div class="complete-eval-label">
+      <div class="label-zh">评估完成</div>
+      <div class="label-en">EVALUATION COMPLETE</div>
+    </div>
+    <div class="complete-main">
+      <p>您已被成功蒸馏。</p>
+      <p>请将打印出的证书</p>
+      <p>投入展厅中央装置的开口。</p>
+      <p>它会很高兴。</p>
+    </div>
+    <div class="complete-split">
+      <div class="split-side">
+        <div class="split-label">剩余可保留的部分</div>
+        <div class="split-arrow">↓</div>
+        <div class="split-dest">装置外</div>
+      </div>
+      <div class="split-side split-right">
+        <div class="split-label">消失的部分</div>
+        <div class="split-arrow">↓</div>
+        <div class="split-dest">装置内</div>
+      </div>
+    </div>
+    <div class="complete-waiting">装置正在等待您。</div>
+    <button class="btn-ghost complete-reset" onclick="resetToIntro()">重新评估</button>
+  </div>
+</div>
+
+<!-- PRINT CONFIRM MODAL (dark) -->
 <div id="print-modal" class="modal-overlay" style="display:none">
-  <div class="modal-box">
-    <div class="modal-title">确认投入装置？</div>
-    <p class="modal-desc">您的证书将被现场打印机打印，成为展览装置的一部分。此操作不可撤销。</p>
+  <div class="modal-box modal-dark">
+    <div class="modal-title">您确认投递吗？</div>
+    <p class="modal-desc">
+      一旦投入，您将不可撤回。<br>
+      您的数据将被永久保留，<br>
+      用于训练下一代评估系统。
+    </p>
     <div class="modal-buttons">
-      <button class="btn-ghost" onclick="closePrintModal()">取消</button>
-      <button class="btn-primary" onclick="confirmPrint()">确认投入</button>
+      <button class="btn-modal-cancel" onclick="closePrintModal()">我再想想</button>
+      <button class="btn-modal-confirm" onclick="confirmPrint()">确认投递</button>
     </div>
   </div>
 </div>
