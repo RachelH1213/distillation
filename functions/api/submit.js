@@ -40,7 +40,8 @@ export async function onRequest(context) {
       // AI analysis fields
       color_distribution, tags, replaceability_percent, evaluation_note,
       ai_relationship, afternoon_state, cognitive_blindspot, easter_egg,
-      distillation_type, type_en, type_description, type_rarity, human_moment_response,
+      distillation_type, type_en, type_description, type_rarity,
+      human_moment_response, afternoon_state_response, final_line,
     } = body;
 
     const insertRes = await sbFetch(SUPABASE_URL, SUPABASE_KEY, 'submissions', 'POST', {
@@ -69,8 +70,10 @@ export async function onRequest(context) {
       distillation_type,
       type_en,
       type_description,
-      type_rarity:         type_rarity || null,
+      type_rarity:              type_rarity || null,
       human_moment_response,
+      afternoon_state_response: body.afternoon_state_response || null,
+      final_line:               body.final_line || null,
       // Backward-compat aliases
       job:          q1_job,
       unique_value: q16_human_moment,

@@ -432,36 +432,84 @@ textarea:focus { border-color: var(--blue); }
   letter-spacing: 0.04em;
 }
 
-/* ===== BODY SCAN ===== */
-.bscan-outer {
+/* ===== TUBE (DISTILLATION FLASK) ===== */
+.tube-title-area { text-align: center; margin-bottom: 12px; }
+.tube-title-en { font-size: 9px; letter-spacing: 0.16em; color: #aaa; }
+.tube-title-zh { font-size: 11px; color: #666; margin-top: 3px; }
+
+.tube-outer {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: flex-start;
-  margin-bottom: 10px;
+  justify-content: center;
 }
-.bscan-fig { flex-shrink: 0; }
-.bscan-legend {
+.tube-fig { flex-shrink: 0; }
+.tube-legend {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding-top: 10px;
+  gap: 9px;
+  padding-top: 18px;
 }
-.bsl-item { display: flex; align-items: center; gap: 7px; }
-.bsl-sw {
-  width: 10px; height: 10px;
-  flex-shrink: 0;
+.tl-item { display: flex; align-items: center; gap: 7px; }
+.tl-sw { width: 10px; height: 10px; flex-shrink: 0; }
+.tl-txt { font-size: 10px; color: #555; line-height: 1.4; }
+.tl-pct { font-weight: 700; color: var(--black); }
+.tube-sub {
+  text-align: center;
+  font-size: 10px;
+  color: #bbb;
+  font-style: italic;
+  margin-top: 10px;
 }
-.bsl-txt { font-size: 10px; color: #555; line-height: 1.4; }
-.bsl-pct { font-weight: 700; color: var(--black); }
-.bscan-footer { text-align: center; margin-top: 6px; }
-.bsf-title {
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  color: #aaa;
-  margin-bottom: 3px;
+
+/* ===== 你与 AI block (black bg) ===== */
+.ai-rel-block {
+  background: var(--black);
+  color: var(--white);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.8;
 }
-.bsf-sub { font-size: 10px; color: #bbb; }
+
+/* ===== 下午3点 ===== */
+.afternoon-answer {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+.afternoon-response {
+  font-size: 12px;
+  font-style: italic;
+  color: #666;
+  line-height: 1.7;
+}
+
+/* ===== 认知盲区 red border ===== */
+.red-border {
+  border-left-color: var(--red) !important;
+  background: #fff4f4 !important;
+}
+
+/* ===== 彩蛋金句 (bigger) ===== */
+.cert-easter-section { padding: 24px 20px; text-align: center; }
+.easter-text {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--black);
+  line-height: 1.9;
+}
+
+/* ===== 结束语 ===== */
+.cert-final-line {
+  text-align: center;
+  padding: 2px 16px 18px;
+  font-size: 11px;
+  color: #bbb;
+  letter-spacing: 0.06em;
+  font-style: italic;
+}
 
 /* Tags */
 .cert-tags { display: flex; flex-wrap: wrap; gap: 6px; }

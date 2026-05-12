@@ -530,6 +530,8 @@ function fallbackAnalysis(data) {
     type_description: '—',
     type_rarity: 31,
     human_moment_response: '这一刻已被系统记录。',
+    afternoon_state_response: '',
+    final_line: '',
   };
 }
 
@@ -562,8 +564,8 @@ function renderCertificate(data) {
   document.getElementById('cert-type-rarity').textContent =
     `类似您的人占今日 ${type_rarity != null ? type_rarity : '--'}%`;
 
-  // Body scan
-  renderBodyScan(color_distribution || { red:8, yellow:10, blue:5, black:14, white:3 });
+  // Tube
+  renderTube(color_distribution || { red:8, yellow:10, blue:5, black:14, white:3 });
 
   // Tags
   const tagsEl = document.getElementById('cert-tags');
@@ -579,9 +581,13 @@ function renderCertificate(data) {
     : `低于今日平均水平（${avg}%）▼ ${avg - pct}%`;
   document.getElementById('cert-eval-note').textContent = evaluation_note || '';
 
-  // AI relationship & afternoon state
-  document.getElementById('cert-ai-rel').textContent    = ai_relationship || '';
-  document.getElementById('cert-afternoon').textContent = afternoon_state || '';
+  // AI relationship
+  document.getElementById('cert-ai-rel').textContent = ai_relationship || '';
+
+  // Afternoon: Q14 original answer + AI conversational response
+  document.getElementById('cert-q14-answer').textContent = data.q14_afternoon || '';
+  document.getElementById('cert-afternoon').textContent  =
+    data.afternoon_state_response || data.afternoon_state || '';
 
   // Cognitive blindspot (conditional)
   const blindspotSec = document.getElementById('sec-blindspot');
@@ -602,101 +608,95 @@ function renderCertificate(data) {
   // Easter egg
   document.getElementById('cert-easter').textContent = easter_egg || '';
 
+  // Final line
+  const finalEl = document.getElementById('cert-final-line');
+  if (finalEl) finalEl.textContent = data.final_line || '';
+
   // Count
   document.getElementById('cert-count').textContent = count || 342;
 }
 
-function renderBodyScan(dist) {
+// ===== TUBE SVG (独立代码片段，方便单独调样式) =====
+function renderTube(dist) {
   const total = 40;
-  const black  = (dist.black  || 0) / total;
-  const red    = (dist.red    || 0) / total;
-  const yellow = (dist.yellow || 0) / total;
-  const blue   = (dist.blue   || 0) / total;
 
-  // Black "AI consumption" rises from feet upward (amplified for drama)
-  const blackFill   = Math.min(0.95, black * 1.5);
-  const BODY_TOP    = 12, BODY_BOT = 293, BODY_H = 281;
-  const blackStartY = Math.max(BODY_TOP, BODY_BOT - blackFill * BODY_H).toFixed(1);
-  const blackH      = (300 - parseFloat(blackStartY)).toFixed(1);
+  // Layers: top → bottom (white floats up, black sinks)
+  const LAYERS = [
+    { key: 'white',  hex: '#E8E5DC', label: '未被定义',  borderSwatch: true },
+    { key: 'yellow', hex: '#F5C518', label: '创造与判断' },
+    { key: 'red',    hex: '#E63329', label: '情感与关系' },
+    { key: 'blue',   hex: '#1A56A0', label: '协作与沟通' },
+    { key: 'black',  hex: '#111111', label: '已被AI掌握' },
+  ];
 
-  // Red heart at chest center
-  const heartR = Math.max(7, Math.min(30, red * 82)).toFixed(1);
+  // Tube body: y=60 to y=278 in viewBox (height=218)
+  const LIQTOP = 60, LIQH = 218;
 
-  // Yellow head fill opacity
-  const headOp = Math.min(1.0, 0.22 + yellow * 2.8).toFixed(2);
+  let curY = LIQTOP;
+  const rects = LAYERS.map(l => {
+    const count = dist[l.key] || 0;
+    const h     = (count / total) * LIQH;
+    const r     = { ...l, y: curY, h, count };
+    curY += h;
+    return r;
+  }).filter(r => r.h > 0.5);
 
-  // Blue arm opacity
-  const armOp = Math.min(1.0, 0.1 + blue * 4.0).toFixed(2);
+  const uid = 'tb' + Math.random().toString(36).substr(2, 5);
 
-  // Unique ID per render to avoid clipPath conflicts
-  const uid = 'bs' + Math.random().toString(36).substr(2, 5);
+  // SVG rects + divider lines between layers
+  const liquidSvg = rects.map((r, i) => `
+    <rect x="13" y="${r.y.toFixed(2)}" width="134" height="${r.h.toFixed(2)}" fill="${r.hex}"/>
+    ${i > 0 ? `<line x1="14" y1="${r.y.toFixed(2)}" x2="146" y2="${r.y.toFixed(2)}" stroke="rgba(255,255,255,0.4)" stroke-width="0.6"/>` : ''}
+  `).join('');
 
-  // Legend rows (ordered by visual importance)
-  const colorMeta = {
-    black:  { hex: '#111111', label: '已被AI掌握' },
-    red:    { hex: '#E63329', label: '情感与关系' },
-    yellow: { hex: '#F5C518', label: '创造与判断' },
-    blue:   { hex: '#1A56A0', label: '协作与沟通' },
-    white:  { hex: '#E8E5DC', label: '未被定义', border: true },
-  };
-  const legendHtml = ['black','red','yellow','blue','white']
-    .filter(k => (dist[k] || 0) > 0)
-    .map(k => {
-      const pct = Math.round((dist[k] / 40) * 100);
-      const border = colorMeta[k].border ? 'border:1px solid #ccc;' : '';
-      return `<div class="bsl-item">
-        <div class="bsl-sw" style="background:${colorMeta[k].hex};${border}"></div>
-        <div class="bsl-txt"><span class="bsl-pct">${pct}%</span> ${colorMeta[k].label}</div>
+  // HTML legend (top → bottom order = same as tube)
+  const legendHtml = LAYERS
+    .filter(l => (dist[l.key] || 0) > 0)
+    .map(l => {
+      const pct = Math.round((dist[l.key] / total) * 100);
+      const border = l.borderSwatch ? 'border:1px solid #ccc;' : '';
+      return `<div class="tl-item">
+        <div class="tl-sw" style="background:${l.hex};${border}"></div>
+        <div class="tl-txt"><span class="tl-pct">${pct}%</span> ${l.label}</div>
       </div>`;
     }).join('');
 
-  document.getElementById('body-scan-container').innerHTML = `
-    <div class="bscan-outer">
-      <div class="bscan-fig">
-        <svg viewBox="0 0 180 300" width="108" height="180" xmlns="http://www.w3.org/2000/svg">
+  document.getElementById('tube-container').innerHTML = `
+    <div class="tube-title-area">
+      <div class="tube-title-en">DISTILLATION ANALYSIS</div>
+      <div class="tube-title-zh">成分蒸馏分析</div>
+    </div>
+    <div class="tube-outer">
+      <div class="tube-fig">
+        <svg viewBox="0 0 160 310" width="96" height="186" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <clipPath id="${uid}">
-              <circle cx="90" cy="28" r="23"/>
-              <rect x="81" y="51" width="18" height="13"/>
-              <polygon points="38,64 142,64 128,165 52,165"/>
-              <polygon points="14,70 40,64 38,178 12,178"/>
-              <polygon points="140,64 166,70 168,178 142,178"/>
-              <rect x="52" y="165" width="30" height="128"/>
-              <rect x="98" y="165" width="30" height="128"/>
+              <!-- Tube interior clip: neck → shoulders → body → round bottom -->
+              <path d="M 51,3 L 109,3 L 109,29 L 146,59 L 146,277 A 66,25 0 0,1 14,277 L 14,59 L 51,29 Z"/>
             </clipPath>
           </defs>
 
+          <!-- Liquid layers (clipped to tube interior) -->
           <g clip-path="url(#${uid})">
-            <rect x="0" y="0" width="180" height="300" fill="#E8E5DC"/>
-            <circle cx="90" cy="28" r="23" fill="#F5C518" opacity="${headOp}"/>
-            <polygon points="14,70 40,64 38,178 12,178" fill="#1A56A0" opacity="${armOp}"/>
-            <polygon points="140,64 166,70 168,178 142,178" fill="#1A56A0" opacity="${armOp}"/>
-            <circle cx="90" cy="115" r="${heartR}" fill="#E63329" opacity="0.88"/>
-            <rect x="0" y="${blackStartY}" width="180" height="${blackH}" fill="#111111" opacity="0.94"/>
+            <rect x="0" y="0" width="160" height="310" fill="#f8f8f8"/>
+            ${liquidSvg}
+            <!-- Glass sheen: left edge highlight -->
+            <rect x="14" y="59" width="9" height="218" fill="rgba(255,255,255,0.22)"/>
+            <!-- Liquid surface glint at very top of liquid -->
+            <line x1="15" y1="${LIQTOP}" x2="145" y2="${LIQTOP}" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
           </g>
 
-          <!-- Outlines -->
-          <circle cx="90" cy="28" r="23" fill="none" stroke="#111" stroke-width="1.5"/>
-          <line x1="81" y1="51" x2="81" y2="64" stroke="#111" stroke-width="1.5"/>
-          <line x1="99" y1="51" x2="99" y2="64" stroke="#111" stroke-width="1.5"/>
-          <polygon points="38,64 142,64 128,165 52,165" fill="none" stroke="#111" stroke-width="1.5"/>
-          <polygon points="14,70 40,64 38,178 12,178" fill="none" stroke="#111" stroke-width="1.5"/>
-          <polygon points="140,64 166,70 168,178 142,178" fill="none" stroke="#111" stroke-width="1.5"/>
-          <line x1="52" y1="165" x2="52" y2="293" stroke="#111" stroke-width="1.5"/>
-          <line x1="82" y1="165" x2="82" y2="293" stroke="#111" stroke-width="1.5"/>
-          <line x1="52" y1="293" x2="82" y2="293" stroke="#111" stroke-width="1.5"/>
-          <line x1="98" y1="165" x2="98" y2="293" stroke="#111" stroke-width="1.5"/>
-          <line x1="128" y1="165" x2="128" y2="293" stroke="#111" stroke-width="1.5"/>
-          <line x1="98" y1="293" x2="128" y2="293" stroke="#111" stroke-width="1.5"/>
-          <line x1="82" y1="165" x2="98" y2="165" stroke="#111" stroke-width="1.5"/>
+          <!-- Tube outline on top -->
+          <path d="M 50,2 L 110,2 L 110,30 L 147,60 L 147,278 A 67,26 0 0,1 13,278 L 13,60 L 50,30 Z"
+                fill="none" stroke="#111" stroke-width="1.5"/>
+          <!-- Neck opening rim -->
+          <line x1="50" y1="2" x2="110" y2="2" stroke="#111" stroke-width="1.5"/>
         </svg>
       </div>
-      <div class="bscan-legend">${legendHtml}</div>
+      <div class="tube-legend">${legendHtml}</div>
     </div>
-    <div class="bscan-footer">
-      <div class="bsf-title">BODY SCAN · 人形扫描</div>
-      <div class="bsf-sub">AI 已识别您身体中尚未被消化的部分</div>
-    </div>`;
+    <div class="tube-sub">每人成分独有 · 由 AI 实时生成</div>
+  `;
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }

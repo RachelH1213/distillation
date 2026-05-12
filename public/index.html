@@ -119,10 +119,10 @@
         <div class="cert-divider"></div>
       </div>
 
-      <!-- BODY SCAN -->
+      <!-- TUBE -->
       <div class="cert-section">
         <div class="section-title">[ 有效成分分布图 ]</div>
-        <div id="body-scan-container"></div>
+        <div id="tube-container"></div>
         <div class="cert-divider"></div>
       </div>
 
@@ -148,36 +148,37 @@
         <div class="cert-divider"></div>
       </div>
 
-      <!-- AI RELATIONSHIP -->
+      <!-- 你与 AI -->
       <div class="cert-section">
-        <div class="section-title">[ 您与 AI 的关系 ]</div>
-        <div class="quote-block yellow-border" id="cert-ai-rel"></div>
+        <div class="section-title">[ 你与 AI ]</div>
+        <div class="ai-rel-block" id="cert-ai-rel"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- AFTERNOON STATE -->
+      <!-- 下午3点的你 -->
       <div class="cert-section">
-        <div class="section-title">[ 下午3点的您 ]</div>
-        <div class="quote-block yellow-border" id="cert-afternoon"></div>
+        <div class="section-title">[ 下午3点的你 ]</div>
+        <div class="afternoon-answer" id="cert-q14-answer"></div>
+        <div class="afternoon-response" id="cert-afternoon"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- COGNITIVE BLINDSPOT (conditional) -->
+      <!-- 认知盲区 (conditional) -->
       <div class="cert-section" id="sec-blindspot" style="display:none">
         <div class="section-title">[ 认知盲区提示 ]</div>
-        <div class="eval-note blue-border" id="cert-blindspot"></div>
+        <div class="eval-note red-border" id="cert-blindspot"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- HUMAN MOMENT (new, Q16) -->
+      <!-- 最像人的瞬间 -->
       <div class="cert-section">
-        <div class="section-title">[ 您本周最像人的瞬间 ]</div>
+        <div class="section-title">[ 你本周最像人的瞬间 ]</div>
         <div class="quote-block yellow-border" id="cert-human-moment"></div>
         <div class="human-response" id="cert-human-response"></div>
         <div class="cert-divider"></div>
       </div>
 
-      <!-- Q17: AI CANNOT EXTRACT -->
+      <!-- 最想带走 -->
       <div class="cert-section">
         <div class="section-title">[ AI 暂时无法提取的部分 ]</div>
         <div class="gray-block">
@@ -185,11 +186,6 @@
           <div class="gray-sub">（此项将于下次迭代处理）</div>
         </div>
         <div class="cert-divider"></div>
-      </div>
-
-      <!-- EASTER EGG -->
-      <div class="cert-section cert-easter">
-        <div class="easter-text" id="cert-easter"></div>
       </div>
 
       <!-- FOOTER INFO -->
@@ -203,6 +199,14 @@
           <span class="info-value"><span id="cert-count">---</span> 人</span>
         </div>
       </div>
+
+      <!-- 彩蛋金句 -->
+      <div class="cert-section cert-easter-section">
+        <div class="easter-text" id="cert-easter"></div>
+      </div>
+
+      <!-- 结束语 -->
+      <div class="cert-final-line" id="cert-final-line"></div>
 
       <!-- BOTTOM -->
       <div class="cert-bottom">

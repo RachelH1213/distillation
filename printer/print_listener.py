@@ -1,5 +1,5 @@
 """
-蒸馏 DISTILLATION — 打印监听脚本 v3
+蒸馏 DISTILLATION — 打印监听脚本 v4
 运行环境：Mac，连接芯烨 XP-T80A USB 热敏打印机
 用法：python print_listener.py
 """
@@ -22,7 +22,7 @@ POLL_INTERVAL = 3
 PAPER_WIDTH   = 32
 
 COLOR_CHARS = {
-    "red": "■", "yellow": "□", "blue": "▣", "black": "█", "white": "░",
+    "red": "▒", "yellow": "░", "blue": "▓", "black": "█", "white": "·",
 }
 COLOR_LABELS = {
     "red": "情感与关系", "yellow": "创造与判断",
@@ -60,55 +60,54 @@ def progress_bar(pct: int, width: int = 20) -> str:
     filled = round(pct / 100 * width)
     return "[" + "█" * filled + "░" * (width - filled) + f"] {pct}%"
 
-def build_ascii_body(dist: dict) -> list:
-    """ASCII human body figure. Black fills from feet up based on AI consumption."""
+def build_ascii_tube(dist: dict) -> list:
+    """Vertical tube with stacked color layers. Top = white, Bottom = black."""
     total = max(1, sum(dist.values()))
-    black_r  = dist.get("black",  0) / total
-    red_r    = dist.get("red",    0) / total
-    yellow_r = dist.get("yellow", 0) / total
-    blue_r   = dist.get("blue",   0) / total
 
-    # How many body rows (from bottom) consumed by black
-    BODY_ROWS = 14
-    black_rows = min(BODY_ROWS, round(black_r * BODY_ROWS * 1.5))
+    # Top-to-bottom layer order (matches SVG)
+    layers = [
+        ("white",  "·", "未定义"),
+        ("yellow", "░", "创造判断"),
+        ("red",    "▒", "情感关系"),
+        ("blue",   "▓", "协作沟通"),
+        ("black",  "█", "AI已掌握"),
+    ]
 
-    H = "▓" if yellow_r >= 0.2 else ("░" if yellow_r >= 0.1 else "·")
-    A = "▓" if blue_r   >= 0.15 else "░"
-    HEART = "■" if red_r >= 0.2 else ("░" if red_r >= 0.1 else " ")
+    TUBE_ROWS = 12
+    TUBE_W    = 6   # inner chars
 
-    def bc(row_from_top: int) -> str:
-        return "█" if (BODY_ROWS - 1 - row_from_top) < black_rows else "░"
+    # Distribute rows per layer
+    remaining = TUBE_ROWS
+    row_counts = []
+    for i, (color, ch, label) in enumerate(layers):
+        pct = dist.get(color, 0) / total
+        rows = round(pct * TUBE_ROWS)
+        if i == len(layers) - 1:
+            rows = remaining
+        rows = max(0, min(remaining, rows))
+        remaining -= rows
+        row_counts.append(rows)
 
     lines = []
-    # Head
-    lines.append(f"   {H*5}   ")
-    lines.append(f"  {H*7}  ")
-    lines.append(f"   {H*5}   ")
     # Neck
-    lines.append(f"    |||    ")
-    # Shoulders (row 0)
-    c = bc(0)
-    lines.append(f"{A*3}==[{c*5}]=={A*3}")
-    # Arms + upper torso (rows 1-4)
-    for row in range(1, 5):
-        c = bc(row)
-        hh = HEART if row == 2 else c
-        lines.append(f"{A*4} [{c}{c}{hh}{c}{c}] {A*4}")
-    # Lower torso (rows 5-7)
-    for row in range(5, 8):
-        c = bc(row)
-        lines.append(f"    [{c*5}]    ")
-    # Hip join (row 8)
-    c = bc(8)
-    lines.append(f"    {c*2} {c*2}    ")
-    # Legs (rows 9-13)
-    for row in range(9, BODY_ROWS):
-        c = bc(row)
-        lines.append(f"    {c*2}  {c*2}   ")
-    # Feet
-    lines.append(f"   ====  ====  ")
+    lines.append(center(f"  ┌{'─'*TUBE_W}┐"))
 
-    return [center(line) for line in lines]
+    # Body rows (top to bottom)
+    for i, (color, ch, label) in enumerate(layers):
+        rows = row_counts[i]
+        pct  = round(dist.get(color, 0) / total * 100)
+        for r in range(rows):
+            inner = ch * TUBE_W
+            if r == rows // 2 and pct > 0:
+                tag = f" {label} {pct}%"
+            else:
+                tag = ""
+            lines.append(center(f"  │{inner}│{tag}"))
+
+    # Bottom
+    lines.append(center(f"  └{'─'*TUBE_W}┘"))
+
+    return lines
 
 def print_certificate(p, record: dict):
     dist             = record.get("color_distribution") or {}
@@ -117,16 +116,18 @@ def print_certificate(p, record: dict):
     note             = record.get("evaluation_note") or ""
     job              = record.get("q1_job") or record.get("job") or ""
     ai_rel           = record.get("ai_relationship") or ""
-    afternoon        = record.get("afternoon_state") or ""
+    q14_ans          = record.get("q14_afternoon") or ""
+    afternoon_resp   = record.get("afternoon_state_response") or record.get("afternoon_state") or ""
     blindspot        = record.get("cognitive_blindspot")
+    human_moment     = record.get("q16_human_moment") or ""
+    human_response   = record.get("human_moment_response") or ""
+    keep             = record.get("q17_keep") or record.get("want_to_keep") or ""
     easter           = record.get("easter_egg") or ""
+    final_line       = record.get("final_line") or ""
     dist_type        = record.get("distillation_type") or ""
     type_en          = record.get("type_en") or ""
     type_desc        = record.get("type_description") or ""
     type_rarity      = record.get("type_rarity")
-    human_moment     = record.get("q16_human_moment") or ""
-    human_response   = record.get("human_moment_response") or ""
-    keep             = record.get("q17_keep") or record.get("want_to_keep") or ""
     ts               = record.get("created_at") or ""
     rid              = str(record.get("id") or "")[-4:].zfill(4)
 
@@ -156,7 +157,7 @@ def print_certificate(p, record: dict):
     # ---- Distillation Type ----
     if dist_type:
         p.set(align="center")
-        p.text("[ 蒸馏类型 DISTILLATION TYPE ]\n")
+        p.text("[ 蒸馏类型 ]\n")
         p.set(bold=True, double_height=True)
         p.text(f"{dist_type}\n")
         p.set(bold=False, double_height=False)
@@ -169,20 +170,19 @@ def print_certificate(p, record: dict):
         p.set(align="left")
         p.text(divider("-") + "\n")
 
-    # ---- Body Scan ----
+    # ---- Tube ASCII ----
     p.set(align="center")
-    p.text("[ 有效成分分布图 · BODY SCAN ]\n")
-    for line in build_ascii_body(dist):
+    p.text("[ 成分蒸馏分析 ]\n")
+    for line in build_ascii_tube(dist):
         p.text(line + "\n")
     p.text("\n")
-    # Legend below the figure
-    total = max(1, sum(dist.values()))
-    for color in ["black", "red", "yellow", "blue", "white"]:
+    total_cells = max(1, sum(dist.values()))
+    for color in ["white", "yellow", "red", "blue", "black"]:
         count = dist.get(color, 0)
         if count > 0:
-            pct = round(count / total * 100)
+            pct_c = round(count / total_cells * 100)
             p.set(align="left")
-            p.text(f"  {COLOR_CHARS.get(color,'?')} {COLOR_LABELS.get(color, color):<8}  {pct}%\n")
+            p.text(f"  {COLOR_CHARS.get(color,'?')} {COLOR_LABELS.get(color, color):<8} {pct_c}%\n")
     p.text(divider("-") + "\n")
 
     # ---- Tags ----
@@ -204,29 +204,35 @@ def print_certificate(p, record: dict):
         p.text(f"  {line}\n")
     p.text(divider("-") + "\n")
 
-    # ---- AI Relationship ----
+    # ---- 你与 AI ----
     if ai_rel:
-        p.text("[ 您与 AI 的关系 ]\n")
+        p.set(bold=True)
+        p.text("[ 你与 AI ]\n")
+        p.set(bold=False)
         for line in wrap(ai_rel):
             p.text(f"  {line}\n")
         p.text(divider("-") + "\n")
 
-    # ---- Afternoon State ----
-    if afternoon:
-        p.text("[ 下午3点的您 ]\n")
-        for line in wrap(afternoon):
+    # ---- 下午3点的你 ----
+    p.text("[ 下午3点的你 ]\n")
+    if q14_ans:
+        p.set(bold=True)
+        p.text(f"  {q14_ans}\n")
+        p.set(bold=False)
+    if afternoon_resp:
+        for line in wrap(afternoon_resp):
             p.text(f"  {line}\n")
-        p.text(divider("-") + "\n")
+    p.text(divider("-") + "\n")
 
-    # ---- Cognitive Blindspot (conditional) ----
+    # ---- 认知盲区 (conditional) ----
     if blindspot:
         p.text("[ 认知盲区提示 ]\n")
         for line in wrap(blindspot):
             p.text(f"  {line}\n")
         p.text(divider("-") + "\n")
 
-    # ---- Human Moment (Q16 + AI response) ----
-    p.text("[ 您本周最像人的瞬间 ]\n")
+    # ---- 最像人的瞬间 ----
+    p.text("[ 你本周最像人的瞬间 ]\n")
     for line in wrap(human_moment):
         p.text(f"  {line}\n")
     if human_response:
@@ -235,24 +241,33 @@ def print_certificate(p, record: dict):
             p.text(f"  {line}\n")
     p.text(divider("-") + "\n")
 
-    # ---- Q17: AI Cannot Extract ----
+    # ---- 最想带走 ----
     p.text("[ AI 暂时无法提取的部分 ]\n")
     for line in wrap(keep):
         p.text(f"  {line}\n")
     p.text("  (此项将于下次迭代处理)\n")
     p.text(divider("-") + "\n")
 
-    # ---- Easter Egg ----
-    if easter:
-        p.set(align="center")
-        for line in wrap(easter):
-            p.text(f"{line}\n")
-        p.set(align="left")
-        p.text(divider("-") + "\n")
-
     # ---- Footer ----
     p.set(align="center")
-    p.text("证书有效期: 您的有生之年\n\n")
+    p.text("证书有效期: 您的有生之年\n")
+    p.text(divider("-") + "\n")
+
+    # ---- 彩蛋金句 ----
+    if easter:
+        p.text("\n")
+        p.set(bold=True)
+        for line in wrap(easter):
+            p.text(center(line) + "\n")
+        p.set(bold=False)
+        p.text("\n")
+
+    # ---- 结束语 ----
+    if final_line:
+        p.set(align="center")
+        p.text(f"{final_line}\n")
+
+    p.text("\n")
     p.set(bold=True)
     p.text("蒸馏 DISTILLATION 2025\n")
     p.set(bold=False)
