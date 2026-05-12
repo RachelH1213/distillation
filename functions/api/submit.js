@@ -85,8 +85,8 @@ export async function onRequest(context) {
 
     if (!insertRes.ok) {
       const err = await insertRes.text();
-      console.error('Supabase insert error:', err);
-      return json({ error: err }, 500);
+      const debugUrl = `${SUPABASE_URL}/rest/v1/submissions`;
+      return json({ error: err, debug_url: debugUrl }, 500);
     }
 
     const location = insertRes.headers.get('Location') || '';
