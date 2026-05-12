@@ -53,8 +53,8 @@ const QUESTIONS = [
   },
   {
     id: 'q9', step: 2, num: 9, type: 'spectrum', required: true,
-    label: '你对失控感的耐受度？',
-    left: '地图依赖', right: '在风暴里跳舞',
+    label: '你工作中最舒服的状态？',
+    left: '一切都在掌控', right: '每天都有惊喜',
   },
 
   // STEP 3: 与AI的关系
@@ -76,7 +76,7 @@ const QUESTIONS = [
     id: 'q12', step: 3, num: 12, type: 'single', required: true,
     label: '面对 AI 的发展，你的真实感受？',
     cols: 2,
-    options: ['兴奋','焦虑','麻木','好奇','抗拒','其实我也是 AI（doge）'],
+    options: ['兴奋','焦虑','麻木','好奇','抗拒','其实我也是 AI'],
     hasOther: false,
   },
 
@@ -562,8 +562,8 @@ function renderCertificate(data) {
   document.getElementById('cert-type-rarity').textContent =
     `类似您的人占今日 ${type_rarity != null ? type_rarity : '--'}%`;
 
-  // Color grid
-  renderColorGrid(color_distribution || { red:8, yellow:10, blue:5, black:14, white:3 });
+  // Body scan
+  renderBodyScan(color_distribution || { red:8, yellow:10, blue:5, black:14, white:3 });
 
   // Tags
   const tagsEl = document.getElementById('cert-tags');
@@ -606,38 +606,97 @@ function renderCertificate(data) {
   document.getElementById('cert-count').textContent = count || 342;
 }
 
-function renderColorGrid(dist) {
-  const colorMap = {
+function renderBodyScan(dist) {
+  const total = 40;
+  const black  = (dist.black  || 0) / total;
+  const red    = (dist.red    || 0) / total;
+  const yellow = (dist.yellow || 0) / total;
+  const blue   = (dist.blue   || 0) / total;
+
+  // Black "AI consumption" rises from feet upward (amplified for drama)
+  const blackFill   = Math.min(0.95, black * 1.5);
+  const BODY_TOP    = 12, BODY_BOT = 293, BODY_H = 281;
+  const blackStartY = Math.max(BODY_TOP, BODY_BOT - blackFill * BODY_H).toFixed(1);
+  const blackH      = (300 - parseFloat(blackStartY)).toFixed(1);
+
+  // Red heart at chest center
+  const heartR = Math.max(7, Math.min(30, red * 82)).toFixed(1);
+
+  // Yellow head fill opacity
+  const headOp = Math.min(1.0, 0.22 + yellow * 2.8).toFixed(2);
+
+  // Blue arm opacity
+  const armOp = Math.min(1.0, 0.1 + blue * 4.0).toFixed(2);
+
+  // Unique ID per render to avoid clipPath conflicts
+  const uid = 'bs' + Math.random().toString(36).substr(2, 5);
+
+  // Legend rows (ordered by visual importance)
+  const colorMeta = {
+    black:  { hex: '#111111', label: '已被AI掌握' },
     red:    { hex: '#E63329', label: '情感与关系' },
     yellow: { hex: '#F5C518', label: '创造与判断' },
     blue:   { hex: '#1A56A0', label: '协作与沟通' },
-    black:  { hex: '#111111', label: '已被AI掌握' },
-    white:  { hex: '#ffffff', label: '未被定义' },
+    white:  { hex: '#E8E5DC', label: '未被定义', border: true },
   };
+  const legendHtml = ['black','red','yellow','blue','white']
+    .filter(k => (dist[k] || 0) > 0)
+    .map(k => {
+      const pct = Math.round((dist[k] / 40) * 100);
+      const border = colorMeta[k].border ? 'border:1px solid #ccc;' : '';
+      return `<div class="bsl-item">
+        <div class="bsl-sw" style="background:${colorMeta[k].hex};${border}"></div>
+        <div class="bsl-txt"><span class="bsl-pct">${pct}%</span> ${colorMeta[k].label}</div>
+      </div>`;
+    }).join('');
 
-  const cells = [];
-  Object.entries(dist).forEach(([color, count]) => {
-    for (let i = 0; i < count; i++) cells.push(color);
-  });
-  for (let i = cells.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cells[i], cells[j]] = [cells[j], cells[i]];
-  }
+  document.getElementById('body-scan-container').innerHTML = `
+    <div class="bscan-outer">
+      <div class="bscan-fig">
+        <svg viewBox="0 0 180 300" width="108" height="180" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="${uid}">
+              <circle cx="90" cy="28" r="23"/>
+              <rect x="81" y="51" width="18" height="13"/>
+              <polygon points="38,64 142,64 128,165 52,165"/>
+              <polygon points="14,70 40,64 38,178 12,178"/>
+              <polygon points="140,64 166,70 168,178 142,178"/>
+              <rect x="52" y="165" width="30" height="128"/>
+              <rect x="98" y="165" width="30" height="128"/>
+            </clipPath>
+          </defs>
 
-  document.getElementById('color-grid').innerHTML = cells.map(color =>
-    `<div class="grid-c" style="background:${colorMap[color].hex}"></div>`
-  ).join('');
+          <g clip-path="url(#${uid})">
+            <rect x="0" y="0" width="180" height="300" fill="#E8E5DC"/>
+            <circle cx="90" cy="28" r="23" fill="#F5C518" opacity="${headOp}"/>
+            <polygon points="14,70 40,64 38,178 12,178" fill="#1A56A0" opacity="${armOp}"/>
+            <polygon points="140,64 166,70 168,178 142,178" fill="#1A56A0" opacity="${armOp}"/>
+            <circle cx="90" cy="115" r="${heartR}" fill="#E63329" opacity="0.88"/>
+            <rect x="0" y="${blackStartY}" width="180" height="${blackH}" fill="#111111" opacity="0.94"/>
+          </g>
 
-  document.getElementById('color-legend').innerHTML = Object.entries(dist)
-    .filter(([, n]) => n > 0)
-    .map(([color, n]) => `
-      <div class="legend-item">
-        <div class="legend-swatch" style="background:${colorMap[color].hex}"></div>
-        <div class="legend-text">
-          <span class="legend-count">${n}格</span> — ${colorMap[color].label}
-        </div>
-      </div>`)
-    .join('');
+          <!-- Outlines -->
+          <circle cx="90" cy="28" r="23" fill="none" stroke="#111" stroke-width="1.5"/>
+          <line x1="81" y1="51" x2="81" y2="64" stroke="#111" stroke-width="1.5"/>
+          <line x1="99" y1="51" x2="99" y2="64" stroke="#111" stroke-width="1.5"/>
+          <polygon points="38,64 142,64 128,165 52,165" fill="none" stroke="#111" stroke-width="1.5"/>
+          <polygon points="14,70 40,64 38,178 12,178" fill="none" stroke="#111" stroke-width="1.5"/>
+          <polygon points="140,64 166,70 168,178 142,178" fill="none" stroke="#111" stroke-width="1.5"/>
+          <line x1="52" y1="165" x2="52" y2="293" stroke="#111" stroke-width="1.5"/>
+          <line x1="82" y1="165" x2="82" y2="293" stroke="#111" stroke-width="1.5"/>
+          <line x1="52" y1="293" x2="82" y2="293" stroke="#111" stroke-width="1.5"/>
+          <line x1="98" y1="165" x2="98" y2="293" stroke="#111" stroke-width="1.5"/>
+          <line x1="128" y1="165" x2="128" y2="293" stroke="#111" stroke-width="1.5"/>
+          <line x1="98" y1="293" x2="128" y2="293" stroke="#111" stroke-width="1.5"/>
+          <line x1="82" y1="165" x2="98" y2="165" stroke="#111" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="bscan-legend">${legendHtml}</div>
+    </div>
+    <div class="bscan-footer">
+      <div class="bsf-title">BODY SCAN · 人形扫描</div>
+      <div class="bsf-sub">AI 已识别您身体中尚未被消化的部分</div>
+    </div>`;
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }

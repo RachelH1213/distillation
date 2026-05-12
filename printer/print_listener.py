@@ -60,17 +60,55 @@ def progress_bar(pct: int, width: int = 20) -> str:
     filled = round(pct / 100 * width)
     return "[" + "█" * filled + "░" * (width - filled) + f"] {pct}%"
 
-def build_color_grid(dist: dict) -> list:
-    cells = []
-    for color, count in dist.items():
-        cells.extend([COLOR_CHARS.get(color, "?")] * int(count))
-    while len(cells) < 40:
-        cells.append("░")
-    cells = cells[:40]
+def build_ascii_body(dist: dict) -> list:
+    """ASCII human body figure. Black fills from feet up based on AI consumption."""
+    total = max(1, sum(dist.values()))
+    black_r  = dist.get("black",  0) / total
+    red_r    = dist.get("red",    0) / total
+    yellow_r = dist.get("yellow", 0) / total
+    blue_r   = dist.get("blue",   0) / total
+
+    # How many body rows (from bottom) consumed by black
+    BODY_ROWS = 14
+    black_rows = min(BODY_ROWS, round(black_r * BODY_ROWS * 1.5))
+
+    H = "▓" if yellow_r >= 0.2 else ("░" if yellow_r >= 0.1 else "·")
+    A = "▓" if blue_r   >= 0.15 else "░"
+    HEART = "■" if red_r >= 0.2 else ("░" if red_r >= 0.1 else " ")
+
+    def bc(row_from_top: int) -> str:
+        return "█" if (BODY_ROWS - 1 - row_from_top) < black_rows else "░"
+
     lines = []
-    for row in range(5):
-        lines.append(center(" ".join(cells[row*8:(row+1)*8])))
-    return lines
+    # Head
+    lines.append(f"   {H*5}   ")
+    lines.append(f"  {H*7}  ")
+    lines.append(f"   {H*5}   ")
+    # Neck
+    lines.append(f"    |||    ")
+    # Shoulders (row 0)
+    c = bc(0)
+    lines.append(f"{A*3}==[{c*5}]=={A*3}")
+    # Arms + upper torso (rows 1-4)
+    for row in range(1, 5):
+        c = bc(row)
+        hh = HEART if row == 2 else c
+        lines.append(f"{A*4} [{c}{c}{hh}{c}{c}] {A*4}")
+    # Lower torso (rows 5-7)
+    for row in range(5, 8):
+        c = bc(row)
+        lines.append(f"    [{c*5}]    ")
+    # Hip join (row 8)
+    c = bc(8)
+    lines.append(f"    {c*2} {c*2}    ")
+    # Legs (rows 9-13)
+    for row in range(9, BODY_ROWS):
+        c = bc(row)
+        lines.append(f"    {c*2}  {c*2}   ")
+    # Feet
+    lines.append(f"   ====  ====  ")
+
+    return [center(line) for line in lines]
 
 def print_certificate(p, record: dict):
     dist             = record.get("color_distribution") or {}
@@ -131,16 +169,20 @@ def print_certificate(p, record: dict):
         p.set(align="left")
         p.text(divider("-") + "\n")
 
-    # ---- Color Grid ----
+    # ---- Body Scan ----
     p.set(align="center")
-    p.text("[ 有效成分分布图 ]\n")
-    for line in build_color_grid(dist):
+    p.text("[ 有效成分分布图 · BODY SCAN ]\n")
+    for line in build_ascii_body(dist):
         p.text(line + "\n")
-    p.set(align="left")
     p.text("\n")
-    for color, count in dist.items():
+    # Legend below the figure
+    total = max(1, sum(dist.values()))
+    for color in ["black", "red", "yellow", "blue", "white"]:
+        count = dist.get(color, 0)
         if count > 0:
-            p.text(f"{COLOR_CHARS.get(color,'?')} {count}格  {COLOR_LABELS.get(color, color)}\n")
+            pct = round(count / total * 100)
+            p.set(align="left")
+            p.text(f"  {COLOR_CHARS.get(color,'?')} {COLOR_LABELS.get(color, color):<8}  {pct}%\n")
     p.text(divider("-") + "\n")
 
     # ---- Tags ----
