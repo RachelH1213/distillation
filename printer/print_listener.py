@@ -1,11 +1,12 @@
 """
-蒸馏 DISTILLATION — 打印监听脚本 v4
-运行环境：Mac，连接芯烨 XP-T80A USB 热敏打印机
-用法：python print_listener.py
+蒸馏 DISTILLATION — 打印监听脚本 v5
+打印机：芯烨 XP-T80A  USB VID=0x1FC9 PID=0x2016
+端点：OUT=0x03  IN=0x81
 """
 
-import os, time, textwrap
+import os, time, textwrap, logging
 from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,14 +14,36 @@ load_dotenv()
 from supabase import create_client, Client
 from escpos.printer import Usb
 
+# ── 环境变量 ─────────────────────────────────────────────
 SUPABASE_URL         = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 
-PRINTER_VID   = 0x0FE6
-PRINTER_PID   = 0x811E
-POLL_INTERVAL = 3
-PAPER_WIDTH   = 32
+# ── 打印机参数 ────────────────────────────────────────────
+PRINTER_VID   = 0x1FC9
+PRINTER_PID   = 0x2016
+PRINTER_IN_EP = 0x81
+PRINTER_OUT_EP= 0x03
 
+POLL_INTERVAL = 3
+RETRY_COUNT   = 3
+RETRY_DELAY   = 2
+PAPER_WIDTH   = 32   # 热敏纸实际字符宽度（单字节字符）
+
+# ── 日志 ─────────────────────────────────────────────────
+LOG_DIR = Path(__file__).parent.parent / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_DIR / "printer.log", encoding="utf-8"),
+        logging.StreamHandler(),
+    ],
+)
+log = logging.getLogger("distillation-printer")
+
+# ── 颜色定义 ─────────────────────────────────────────────
 COLOR_CHARS = {
     "red": "▒", "yellow": "░", "blue": "▓", "black": "█", "white": "·",
 }
@@ -29,6 +52,7 @@ COLOR_LABELS = {
     "blue": "协作与沟通", "black": "已被AI掌握", "white": "未被定义",
 }
 
+# ── Supabase ──────────────────────────────────────────────
 def get_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -44,9 +68,13 @@ def fetch_pending(supabase: Client):
 def mark_printed(supabase: Client, rid: str):
     supabase.table("submissions").update({"printed": True}).eq("id", rid).execute()
 
+# ── 打印机 ────────────────────────────────────────────────
 def get_printer():
-    return Usb(PRINTER_VID, PRINTER_PID, profile="default")
+    return Usb(PRINTER_VID, PRINTER_PID,
+               in_ep=PRINTER_IN_EP, out_ep=PRINTER_OUT_EP,
+               profile="default")
 
+# ── 文字工具 ─────────────────────────────────────────────
 def center(text: str, width: int = PAPER_WIDTH) -> str:
     return text.center(width)
 
@@ -60,11 +88,35 @@ def progress_bar(pct: int, width: int = 20) -> str:
     filled = round(pct / 100 * width)
     return "[" + "█" * filled + "░" * (width - filled) + f"] {pct}%"
 
-def build_ascii_tube(dist: dict) -> list:
-    """Vertical tube with stacked color layers. Top = white, Bottom = black."""
-    total = max(1, sum(dist.values()))
+# 中文打印：将字符串按 GBK 编码发送
+def ctext(p, text: str):
+    """打印含中文的字符串（GBK 编码）。"""
+    try:
+        p._raw(text.encode("gbk", errors="replace"))
+    except Exception:
+        p._raw(text.encode("utf-8", errors="replace"))
 
-    # Top-to-bottom layer order (matches SVG)
+def cline(p, text: str):
+    ctext(p, text + "\n")
+
+def clines(p, lines):
+    for line in lines:
+        cline(p, line)
+
+# ── ASCII 试管 ────────────────────────────────────────────
+def build_ascii_tube(dist: dict) -> list:
+    """
+    垂直试管，五层液体，从上到下：white → yellow → red → blue → black
+    示例：
+      ┌──────┐
+      │······│ 未定义 20%
+      │░░░░░░│ 创造判断 25%
+      │▒▒▒▒▒▒│ 情感关系 23%
+      │▓▓▓▓▓▓│ 协作沟通  8%
+      │██████│ AI已掌握 25%
+      └──────┘
+    """
+    total = max(1, sum(dist.values()))
     layers = [
         ("white",  "·", "未定义"),
         ("yellow", "░", "创造判断"),
@@ -74,13 +126,12 @@ def build_ascii_tube(dist: dict) -> list:
     ]
 
     TUBE_ROWS = 12
-    TUBE_W    = 6   # inner chars
+    TUBE_W    = 6
 
-    # Distribute rows per layer
-    remaining = TUBE_ROWS
+    remaining  = TUBE_ROWS
     row_counts = []
     for i, (color, ch, label) in enumerate(layers):
-        pct = dist.get(color, 0) / total
+        pct  = dist.get(color, 0) / total
         rows = round(pct * TUBE_ROWS)
         if i == len(layers) - 1:
             rows = remaining
@@ -89,50 +140,43 @@ def build_ascii_tube(dist: dict) -> list:
         row_counts.append(rows)
 
     lines = []
-    # Neck
     lines.append(center(f"  ┌{'─'*TUBE_W}┐"))
-
-    # Body rows (top to bottom)
     for i, (color, ch, label) in enumerate(layers):
         rows = row_counts[i]
         pct  = round(dist.get(color, 0) / total * 100)
         for r in range(rows):
             inner = ch * TUBE_W
-            if r == rows // 2 and pct > 0:
-                tag = f" {label} {pct}%"
-            else:
-                tag = ""
+            tag = f" {label} {pct}%" if (r == rows // 2 and pct > 0) else ""
             lines.append(center(f"  │{inner}│{tag}"))
-
-    # Bottom
     lines.append(center(f"  └{'─'*TUBE_W}┘"))
-
     return lines
 
+# ── 证书打印 ──────────────────────────────────────────────
 def print_certificate(p, record: dict):
-    dist             = record.get("color_distribution") or {}
-    tags             = record.get("tags") or []
-    pct              = record.get("replaceability") or 0
-    note             = record.get("evaluation_note") or ""
-    job              = record.get("q1_job") or record.get("job") or ""
-    ai_rel           = record.get("ai_relationship") or ""
-    q14_ans          = record.get("q14_afternoon") or ""
-    afternoon_resp   = record.get("afternoon_state_response") or record.get("afternoon_state") or ""
-    blindspot        = record.get("cognitive_blindspot")
-    human_moment     = record.get("q16_human_moment") or ""
-    human_response   = record.get("human_moment_response") or ""
-    keep             = record.get("q17_keep") or record.get("want_to_keep") or ""
-    easter           = record.get("easter_egg") or ""
-    final_line       = record.get("final_line") or ""
-    dist_type        = record.get("distillation_type") or ""
-    type_en          = record.get("type_en") or ""
-    type_desc        = record.get("type_description") or ""
-    type_rarity      = record.get("type_rarity")
-    ts               = record.get("created_at") or ""
-    rid              = str(record.get("id") or "")[-4:].zfill(4)
+    dist           = record.get("color_distribution") or {}
+    tags           = record.get("tags") or []
+    pct            = record.get("replaceability") or 0
+    note           = record.get("evaluation_note") or ""
+    job            = record.get("q1_job") or record.get("job") or ""
+    ai_rel         = record.get("ai_relationship") or ""
+    q14_ans        = record.get("q14_afternoon") or ""
+    afternoon_resp = record.get("afternoon_state_response") or record.get("afternoon_state") or ""
+    blindspot      = record.get("cognitive_blindspot")
+    human_moment   = record.get("q16_human_moment") or ""
+    human_response = record.get("human_moment_response") or ""
+    keep           = record.get("q17_keep") or record.get("want_to_keep") or ""
+    easter         = record.get("easter_egg") or ""
+    final_line     = record.get("final_line") or ""
+    dist_type      = record.get("distillation_type") or ""
+    type_en        = record.get("type_en") or ""
+    type_desc      = record.get("type_description") or ""
+    type_rarity    = record.get("type_rarity")
+    ts             = record.get("created_at") or ""
+    rid            = str(record.get("id") or "")[-4:].zfill(4)
+    count          = record.get("count") or ""
 
     try:
-        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        dt     = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         ts_str = dt.strftime("%Y.%m.%d %H:%M")
     except Exception:
         ts_str = ts[:16] if ts else "----"
@@ -140,168 +184,185 @@ def print_certificate(p, record: dict):
     avg = 61
     cmp = f"高于平均{pct-avg}%" if pct > avg else f"低于平均{avg-pct}%"
 
-    # ---- Header ----
+    # ═══ HEADER ═════════════════════════════════════════
     p.set(align="center", bold=True, double_height=True, double_width=True)
     p.text("DISTILLATION\n")
     p.set(align="center", bold=False, double_height=False, double_width=False)
-    p.text("人类蒸馏证书\n")
-    p.text(divider("=") + "\n")
+    cline(p, "人类蒸馏证书")
+    cline(p, divider("="))
 
-    # ---- Basic info ----
+    # ═══ 基本信息 ════════════════════════════════════════
     p.set(align="left")
-    p.text(f"编号  #{rid}\n")
-    p.text(f"时间  {ts_str}\n")
-    p.text(f"职业  {job}\n")
-    p.text(divider("-") + "\n")
+    cline(p, f"编号  #{rid}")
+    cline(p, f"时间  {ts_str}")
+    cline(p, f"职业  {job}")
+    cline(p, divider("-"))
 
-    # ---- Distillation Type ----
+    # ═══ 蒸馏类型 ════════════════════════════════════════
     if dist_type:
         p.set(align="center")
-        p.text("[ 蒸馏类型 ]\n")
+        cline(p, "[ 蒸馏类型 ]")
         p.set(bold=True, double_height=True)
-        p.text(f"{dist_type}\n")
+        cline(p, dist_type)
         p.set(bold=False, double_height=False)
         if type_en:
             p.text(f"{type_en}\n")
         if type_desc:
-            p.text(f"{type_desc}\n")
+            cline(p, type_desc)
         if type_rarity is not None:
-            p.text(f"类似您的人占今日 {type_rarity}%\n")
+            cline(p, f"类似您的人占今日 {type_rarity}%")
         p.set(align="left")
-        p.text(divider("-") + "\n")
+        cline(p, divider("-"))
 
-    # ---- Tube ASCII ----
+    # ═══ ASCII 试管 ══════════════════════════════════════
     p.set(align="center")
-    p.text("[ 成分蒸馏分析 ]\n")
+    cline(p, "[ 成分蒸馏分析 ]")
     for line in build_ascii_tube(dist):
-        p.text(line + "\n")
+        cline(p, line)
     p.text("\n")
     total_cells = max(1, sum(dist.values()))
     for color in ["white", "yellow", "red", "blue", "black"]:
-        count = dist.get(color, 0)
-        if count > 0:
-            pct_c = round(count / total_cells * 100)
+        count_c = dist.get(color, 0)
+        if count_c > 0:
+            pct_c = round(count_c / total_cells * 100)
             p.set(align="left")
-            p.text(f"  {COLOR_CHARS.get(color,'?')} {COLOR_LABELS.get(color, color):<8} {pct_c}%\n")
-    p.text(divider("-") + "\n")
+            cline(p, f"  {COLOR_CHARS.get(color,'?')} {COLOR_LABELS.get(color, color):<8} {pct_c}%")
+    cline(p, divider("-"))
 
-    # ---- Tags ----
+    # ═══ Tags ════════════════════════════════════════════
     p.set(align="center")
-    p.text("[ 有效成分提取结果 ]\n")
+    cline(p, "[ 有效成分提取结果 ]")
     p.set(bold=True)
-    p.text("  ".join(f"[{t}]" for t in tags) + "\n")
+    cline(p, "  ".join(f"[{t}]" for t in tags))
     p.set(bold=False, align="left")
-    p.text(divider("-") + "\n")
+    cline(p, divider("-"))
 
-    # ---- Replaceability ----
-    p.text("[ 可替代性评估 ]\n")
+    # ═══ 可替代性 ════════════════════════════════════════
+    cline(p, "[ 可替代性评估 ]")
     p.set(bold=True)
-    p.text(f"可替代性指数: {pct}%\n")
+    cline(p, f"可替代性指数: {pct}%")
     p.set(bold=False)
     p.text(progress_bar(pct) + "\n")
-    p.text(cmp + "\n\n")
+    cline(p, cmp)
+    p.text("\n")
     for line in wrap(note):
-        p.text(f"  {line}\n")
-    p.text(divider("-") + "\n")
+        cline(p, f"  {line}")
+    cline(p, divider("-"))
 
-    # ---- 你与 AI ----
+    # ═══ 你与 AI ════════════════════════════════════════
     if ai_rel:
         p.set(bold=True)
-        p.text("[ 你与 AI ]\n")
+        cline(p, "[ 你与 AI ]")
         p.set(bold=False)
         for line in wrap(ai_rel):
-            p.text(f"  {line}\n")
-        p.text(divider("-") + "\n")
+            cline(p, f"  {line}")
+        cline(p, divider("-"))
 
-    # ---- 下午3点的你 ----
-    p.text("[ 下午3点的你 ]\n")
+    # ═══ 下午3点的你 ═════════════════════════════════════
+    cline(p, "[ 下午3点的你 ]")
     if q14_ans:
         p.set(bold=True)
-        p.text(f"  {q14_ans}\n")
+        cline(p, f"  {q14_ans}")
         p.set(bold=False)
     if afternoon_resp:
         for line in wrap(afternoon_resp):
-            p.text(f"  {line}\n")
-    p.text(divider("-") + "\n")
+            cline(p, f"  {line}")
+    cline(p, divider("-"))
 
-    # ---- 认知盲区 (conditional) ----
+    # ═══ 认知盲区（条件显示）════════════════════════════
     if blindspot:
-        p.text("[ 认知盲区提示 ]\n")
+        cline(p, "[ 认知盲区提示 ]")
         for line in wrap(blindspot):
-            p.text(f"  {line}\n")
-        p.text(divider("-") + "\n")
+            cline(p, f"  {line}")
+        cline(p, divider("-"))
 
-    # ---- 最像人的瞬间 ----
-    p.text("[ 你本周最像人的瞬间 ]\n")
+    # ═══ 最像人的瞬间 ════════════════════════════════════
+    cline(p, "[ 你本周最像人的瞬间 ]")
     for line in wrap(human_moment):
-        p.text(f"  {line}\n")
+        cline(p, f"  {line}")
     if human_response:
         p.text("\n")
         for line in wrap(human_response):
-            p.text(f"  {line}\n")
-    p.text(divider("-") + "\n")
+            cline(p, f"  {line}")
+    cline(p, divider("-"))
 
-    # ---- 最想带走 ----
-    p.text("[ AI 暂时无法提取的部分 ]\n")
+    # ═══ AI 暂时无法提取的部分 ══════════════════════════
+    cline(p, "[ AI 暂时无法提取的部分 ]")
     for line in wrap(keep):
-        p.text(f"  {line}\n")
-    p.text("  (此项将于下次迭代处理)\n")
-    p.text(divider("-") + "\n")
+        cline(p, f"  {line}")
+    cline(p, "  (此项将于下次迭代处理)")
+    cline(p, divider("-"))
 
-    # ---- Footer ----
+    # ═══ 页脚信息 ════════════════════════════════════════
     p.set(align="center")
-    p.text("证书有效期: 您的有生之年\n")
-    p.text(divider("-") + "\n")
+    cline(p, "证书有效期: 您的有生之年")
+    if count:
+        cline(p, f"今日已蒸馏: {count} 人")
+    cline(p, divider("-"))
 
-    # ---- 彩蛋金句 ----
+    # ═══ 彩蛋金句（加粗居中）════════════════════════════
     if easter:
         p.text("\n")
-        p.set(bold=True)
+        p.set(bold=True, align="center")
         for line in wrap(easter):
-            p.text(center(line) + "\n")
+            cline(p, center(line))
         p.set(bold=False)
         p.text("\n")
 
-    # ---- 结束语 ----
+    # ═══ 结束语 ══════════════════════════════════════════
     if final_line:
         p.set(align="center")
-        p.text(f"{final_line}\n")
+        cline(p, final_line)
 
     p.text("\n")
-    p.set(bold=True)
-    p.text("蒸馏 DISTILLATION 2025\n")
+    p.set(bold=True, align="center")
+    p.text("DISTILLATION 2025\n")
     p.set(bold=False)
-    p.text("De Stijl · 空间平等\n")
+    cline(p, "De Stijl · 空间平等")
     p.text("\n\n\n")
     p.cut()
 
+# ── 主循环 ────────────────────────────────────────────────
 def main():
-    print(f"[{datetime.now():%H:%M:%S}] 打印监听启动，每 {POLL_INTERVAL} 秒轮询一次...")
+    log.info(f"打印监听启动，VID={hex(PRINTER_VID)} PID={hex(PRINTER_PID)}，轮询间隔 {POLL_INTERVAL}s")
     supabase = get_supabase()
 
     while True:
         try:
             pending = fetch_pending(supabase)
             if pending:
-                print(f"[{datetime.now():%H:%M:%S}] 发现 {len(pending)} 条待打印记录")
+                log.info(f"发现 {len(pending)} 条待打印记录")
                 for record in pending:
                     rid = record["id"]
-                    print(f"  打印中: #{str(rid)[-4:].zfill(4)} ...")
-                    try:
-                        p = get_printer()
-                        print_certificate(p, record)
-                        p.close()
+                    rid_short = str(rid)[-4:].zfill(4)
+                    log.info(f"  准备打印 #{rid_short}")
+
+                    success = False
+                    for attempt in range(1, RETRY_COUNT + 1):
+                        try:
+                            p = get_printer()
+                            print_certificate(p, record)
+                            p.close()
+                            success = True
+                            break
+                        except Exception as e:
+                            log.warning(f"  第 {attempt} 次打印失败: {e}")
+                            if attempt < RETRY_COUNT:
+                                time.sleep(RETRY_DELAY)
+
+                    if success:
                         mark_printed(supabase, rid)
-                        print(f"  ✓ 打印完成")
-                    except Exception as e:
-                        print(f"  ✗ 打印失败: {e}")
+                        log.info(f"  ✓ #{rid_short} 打印完成")
+                    else:
+                        log.error(f"  ✗ #{rid_short} 重试 {RETRY_COUNT} 次后仍失败，跳过")
             else:
                 print(f"[{datetime.now():%H:%M:%S}] 无待打印记录", end="\r")
+
         except KeyboardInterrupt:
-            print("\n停止监听。")
+            log.info("停止监听。")
             break
         except Exception as e:
-            print(f"[{datetime.now():%H:%M:%S}] 错误: {e}")
+            log.error(f"轮询错误: {e}")
 
         time.sleep(POLL_INTERVAL)
 
