@@ -37,10 +37,16 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler(LOG_DIR / "printer.log", encoding="utf-8"),
+        logging.FileHandler(LOG_DIR / "printer.log", encoding="utf-8", delay=False),
         logging.StreamHandler(),
     ],
+    force=True,
 )
+# 确保每条日志立即写盘
+for h in logging.getLogger().handlers:
+    if hasattr(h, 'stream') and hasattr(h.stream, 'flush'):
+        h.setLevel(logging.DEBUG)
+
 log = logging.getLogger("distillation-printer")
 
 # ── 颜色定义 ─────────────────────────────────────────────
