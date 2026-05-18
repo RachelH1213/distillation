@@ -611,33 +611,56 @@ async function submitForm() {
   goToPage('page-loading');
   const formData = collectFormData();
 
-  try {
-    const analysis = await _callZhipu(formData);
-    console.log('[AI Analysis]', JSON.stringify(analysis, null, 2));
+  let analysis = null;
 
-    let id = null, count = 342;
+  // 第一次尝试：浏览器直接调智谱
+  try {
+    analysis = await _callZhipu(formData);
+    console.log('[AI] browser direct OK');
+  } catch (e1) {
+    console.warn('[AI] browser direct failed:', e1.message, '— trying EdgeOne proxy');
+    // 第二次尝试：走 EdgeOne 代理
     try {
-      const submitRes = await fetch('/api/submit', {
+      const proxyRes = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, ...analysis }),
+        body: JSON.stringify(formData),
       });
-      if (submitRes.ok) {
-        const submitData = await submitRes.json();
-        id = submitData.id;
-        count = submitData.count || 342;
+      if (proxyRes.ok) {
+        const proxyData = await proxyRes.json();
+        if (!proxyData._debug_error) {
+          analysis = proxyData;
+          console.log('[AI] EdgeOne proxy OK');
+        } else {
+          throw new Error(proxyData._debug_error);
+        }
+      } else {
+        throw new Error(`proxy ${proxyRes.status}`);
       }
-    } catch (_) {}
-
-    renderCertificate({ ...formData, ...analysis, id, count });
-    goToPage('page-cert');
-
-  } catch (err) {
-    console.error('submitForm error:', err);
-    const analysis = fallbackAnalysis(formData);
-    renderCertificate({ ...formData, ...analysis, id: null, count: 342 });
-    goToPage('page-cert');
+    } catch (e2) {
+      console.warn('[AI] EdgeOne proxy also failed:', e2.message, '— using fallback');
+      analysis = fallbackAnalysis(formData);
+    }
   }
+
+  console.log('[AI Analysis]', JSON.stringify(analysis, null, 2));
+
+  let id = null, count = 342;
+  try {
+    const submitRes = await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...formData, ...analysis }),
+    });
+    if (submitRes.ok) {
+      const submitData = await submitRes.json();
+      id = submitData.id;
+      count = submitData.count || 342;
+    }
+  } catch (_) {}
+
+  renderCertificate({ ...formData, ...analysis, id, count });
+  goToPage('page-cert');
 }
 
 // ===== FALLBACK ANALYSIS =====
