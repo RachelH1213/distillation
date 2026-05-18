@@ -126,7 +126,9 @@ export async function onRequest(context) {
   const apiKey = env.ZHIPU_API_KEY;
   if (!apiKey) {
     console.error('ZHIPU_API_KEY not set, using fallback');
-    return json(ruleBased(body));
+    const fallback = ruleBased(body);
+    fallback._debug_error = 'ZHIPU_API_KEY not set';
+    return json(fallback);
   }
 
   try {
@@ -197,7 +199,9 @@ export async function onRequest(context) {
 
   } catch (err) {
     console.error('analyze error:', err.message);
-    return json(ruleBased(body));
+    const fallback = ruleBased(body);
+    fallback._debug_error = err.message;
+    return json(fallback);
   }
 }
 

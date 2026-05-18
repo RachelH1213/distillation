@@ -80,7 +80,7 @@ export async function onRequest(context) {
       want_to_keep: q17_keep,
       // Print flags
       printed:       false,
-      send_to_print: false,
+      send_to_print: true,
     }, { Prefer: 'return=minimal' });
 
     if (!insertRes.ok) {
