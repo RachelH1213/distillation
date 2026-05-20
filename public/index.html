@@ -54,6 +54,25 @@
   </div>
 </div>
 
+<!-- PAGE 2.5: NAME -->
+<div id="page-name" class="page">
+  <div class="intro-wrapper">
+    <div class="intro-body" style="text-align:center">
+      <p style="font-size:13px;color:#aaa;letter-spacing:.1em;margin-bottom:16px">最后一步</p>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">你叫什么名字？</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:32px">名字会出现在你的证书和小票上</p>
+      <input type="text" id="name-input" class="other-input"
+        placeholder="请输入你的名字" maxlength="10"
+        style="width:100%;font-size:18px;padding:14px 16px;text-align:center"
+        oninput="checkNameInput()">
+    </div>
+    <div class="intro-footer">
+      <button class="btn-primary" id="btn-name-submit" onclick="submitWithName()" disabled>开始蒸馏</button>
+      <button class="btn-ghost" onclick="goBackFromName()" style="margin-top:12px;width:100%">← 返回修改</button>
+    </div>
+  </div>
+</div>
+
 <!-- PAGE 3: LOADING -->
 <div id="page-loading" class="page">
   <div class="loading-wrapper">
@@ -92,6 +111,10 @@
 
       <!-- BASIC INFO -->
       <div class="cert-section cert-info">
+        <div class="info-row" id="cert-name-row" style="display:none">
+          <span class="info-label">姓名</span>
+          <span class="info-value" id="cert-name">----</span>
+        </div>
         <div class="info-row">
           <span class="info-label">编号</span>
           <span class="info-value" id="cert-id">#0000</span>

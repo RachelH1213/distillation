@@ -389,7 +389,7 @@ function updateNextButton() {
 
 function nextStep() {
   if (!validateStep(currentStep)) return;
-  if (currentStep === STEPS.length) { submitForm(); return; }
+  if (currentStep === STEPS.length) { goToPage('page-name'); document.getElementById('name-input').focus(); return; }
   currentStep++;
   renderStep(currentStep);
   window.scrollTo(0, 0);
@@ -400,6 +400,22 @@ function prevStep() {
   currentStep--;
   renderStep(currentStep);
   window.scrollTo(0, 0);
+}
+
+function checkNameInput() {
+  const val = document.getElementById('name-input').value.trim();
+  document.getElementById('btn-name-submit').disabled = val.length === 0;
+}
+
+function goBackFromName() {
+  goToPage('page-form');
+}
+
+function submitWithName() {
+  const name = document.getElementById('name-input').value.trim();
+  if (!name) return;
+  answers._name = name;
+  submitForm();
 }
 
 // ===== COLLECT FORM DATA =====
@@ -445,6 +461,7 @@ function collectFormData() {
     q15_willing_to_give: getMultiVal('q15'),
     q16_human_moment:    answers['q16'] || '',
     q17_keep:            answers['q17'] || '',
+    participant_name:    answers['_name'] || '',
   };
 }
 
@@ -719,6 +736,7 @@ function renderCertificate(data) {
     color_distribution, tags, replaceability_percent, evaluation_note,
     ai_relationship, afternoon_state, cognitive_blindspot, easter_egg,
     distillation_type, type_en, type_description, type_rarity, human_moment_response,
+    participant_name,
   } = data;
 
   currentSubmissionId = id;
@@ -732,6 +750,13 @@ function renderCertificate(data) {
   document.getElementById('cert-id').textContent   = `#${certNum}`;
   document.getElementById('cert-time').textContent = ts;
   document.getElementById('cert-job').textContent  = q1_job || '----';
+  const nameRow = document.getElementById('cert-name-row');
+  if (participant_name) {
+    document.getElementById('cert-name').textContent = participant_name;
+    nameRow.style.display = '';
+  } else {
+    nameRow.style.display = 'none';
+  }
 
   // Distillation type card
   document.getElementById('cert-type-name').textContent   = distillation_type || '---';

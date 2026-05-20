@@ -37,6 +37,8 @@ export async function onRequest(context) {
       q13_only_yours, q14_afternoon, q15_willing_to_give,
       // Human moments
       q16_human_moment, q17_keep,
+      // Name
+      participant_name,
       // AI analysis fields
       color_distribution, tags, replaceability_percent, evaluation_note,
       ai_relationship, afternoon_state, cognitive_blindspot, easter_egg,
@@ -45,6 +47,8 @@ export async function onRequest(context) {
     } = body;
 
     const insertRes = await sbFetch(SUPABASE_URL, SUPABASE_KEY, 'submissions', 'POST', {
+      // Name
+      participant_name:    participant_name || null,
       // New 17-question fields
       q1_job,
       q2_years,
