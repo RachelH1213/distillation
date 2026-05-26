@@ -85,7 +85,7 @@ export async function onRequest(context) {
       // Print flags
       printed:       false,
       send_to_print: true,
-    }, { Prefer: 'return=minimal' });
+    }, { Prefer: 'return=representation' });
 
     if (!insertRes.ok) {
       const err = await insertRes.text();
@@ -93,9 +93,8 @@ export async function onRequest(context) {
       return json({ error: err, debug_url: debugUrl }, 500);
     }
 
-    const location = insertRes.headers.get('Location') || '';
-    const idMatch = location.match(/id=eq\.([^&]+)/);
-    const id = idMatch ? idMatch[1] : null;
+    const inserted = await insertRes.json();
+    const id = inserted?.[0]?.id ?? null;
 
     // Today's count
     const today = new Date().toISOString().split('T')[0];
